@@ -1,0 +1,132 @@
+report ZABAP8_BDC_PGM
+       no standard page heading line-size 255.
+
+include bdcrecx1.
+
+start-of-selection.
+
+parameters: p_enum type z21308empl-empid.
+
+perform open_group.
+
+  CALL FUNCTION 'GUI_UPLOAD'
+    EXPORTING
+      FILENAME                = lv_filename
+      FILETYPE                = 'ASC'
+      HAS_FIELD_SEPARATOR     = cl_abap_char_utilities=>horizontal_tab
+    TABLES
+      DATA_TAB                = itab
+    EXCEPTIONS
+      FILE_WRITE_ERROR        = 1
+      NO_BATCH                = 2
+      GUI_REFUSE_FILETRANSFER = 3
+      INVALID_TYPE            = 4
+      NO_AUTHORITY            = 5
+      UNKNOWN_ERROR           = 6
+      HEADER_NOT_ALLOWED      = 7
+      SEPARATOR_NOT_ALLOWED   = 8
+      FILESIZE_NOT_ALLOWED    = 9
+      HEADER_TOO_LONG         = 10
+      DP_ERROR_CREATE         = 11
+      DP_ERROR_SEND           = 12
+      DP_ERROR_WRITE          = 13
+      UNKNOWN_DP_ERROR        = 14
+      ACCESS_DENIED           = 15
+      DP_OUT_OF_MEMORY        = 16
+      DISK_FULL               = 17
+      DP_TIMEOUT              = 18
+      FILE_NOT_FOUND          = 19
+      DATAPROVIDER_EXCEPTION  = 20
+      CONTROL_FLUSH_ERROR     = 21
+      OTHERS                  = 22.
+
+
+perform bdc_dynpro      using 'SAPMSRD0' '0102'.
+perform bdc_field       using 'BDC_CURSOR'
+                              'RSRD1-TBMA_VAL'.
+perform bdc_field       using 'BDC_OKCODE'
+                              '=EDIT'.
+perform bdc_field       using 'RSRD1-TBMA'
+                              'X'.
+perform bdc_field       using 'RSRD1-TBMA_VAL'
+                              'Z21308EMPL'.
+perform bdc_dynpro      using 'SAPLSD41' '2200'.
+perform bdc_field       using 'BDC_CURSOR'
+                              'DD02D-DDTEXT'.
+perform bdc_field       using 'BDC_OKCODE'
+                              '=TDED'.
+perform bdc_field       using 'DD02D-DDTEXT'
+                              'employee details'.
+perform bdc_dynpro      using 'SAPLZ21308EMPL' '0001'.
+perform bdc_field       using 'BDC_CURSOR'
+                              'Z21308EMPL-EMPID(01)'.
+perform bdc_field       using 'BDC_OKCODE'
+                              '=NEWL'.
+perform bdc_dynpro      using 'SAPLZ21308EMPL' '0002'.
+perform bdc_field       using 'BDC_OKCODE'
+                              '=SAVE'.
+perform bdc_field       using 'Z21308EMPL-EMPID'
+*                              '3'.
+                               p_enum.
+perform bdc_field       using 'Z21308EMPL-GRADE'
+                              '3'.
+perform bdc_field       using 'Z21308EMPL-LOCATION'
+                              'idnia'.
+perform bdc_field       using 'Z21308EMPL-PU'
+                              '3'.
+perform bdc_field       using 'Z21308EMPL-NAME1'
+                              'raj'.
+perform bdc_field       using 'Z21308EMPL-STREET1'
+                              'street'.
+perform bdc_field       using 'Z21308EMPL-DISTRICT'
+                              'distr'.
+perform bdc_field       using 'Z21308EMPL-COUNTRY'
+                              'ind'.
+perform bdc_dynpro      using 'SAPLZ21308EMPL' '0002'.
+perform bdc_field       using 'BDC_CURSOR'
+                              'Z21308EMPL-GRADE'.
+perform bdc_field       using 'BDC_OKCODE'
+                              '=UEBE'.
+perform bdc_field       using 'Z21308EMPL-GRADE'
+                              '3'.
+perform bdc_field       using 'Z21308EMPL-LOCATION'
+                              'idnia'.
+perform bdc_field       using 'Z21308EMPL-PU'
+                              '3'.
+perform bdc_field       using 'Z21308EMPL-NAME1'
+                              'raj'.
+perform bdc_field       using 'Z21308EMPL-STREET1'
+                              'street'.
+perform bdc_field       using 'Z21308EMPL-DISTRICT'
+                              'distr'.
+perform bdc_field       using 'Z21308EMPL-COUNTRY'
+                              'IND'.
+perform bdc_dynpro      using 'SAPLZ21308EMPL' '0001'.
+perform bdc_field       using 'BDC_CURSOR'
+                              'Z21308EMPL-EMPID(01)'.
+perform bdc_field       using 'BDC_OKCODE'
+                              '/00'.
+perform bdc_dynpro      using 'SAPLZ21308EMPL' '0001'.
+perform bdc_field       using 'BDC_CURSOR'
+                              'Z21308EMPL-EMPID(01)'.
+perform bdc_field       using 'BDC_OKCODE'
+                              '=BACK'.
+perform bdc_dynpro      using 'SAPLSD41' '2200'.
+perform bdc_field       using 'BDC_CURSOR'
+                              'DD02D-DDTEXT'.
+perform bdc_field       using 'BDC_OKCODE'
+                              '=WB_BACK'.
+perform bdc_field       using 'DD02D-DDTEXT'
+                              'employee details'.
+perform bdc_dynpro      using 'SAPMSRD0' '0102'.
+perform bdc_field       using 'BDC_CURSOR'
+                              'RSRD1-TBMA_VAL'.
+perform bdc_field       using 'BDC_OKCODE'
+                              '=BACK'.
+perform bdc_field       using 'RSRD1-TBMA'
+                              'X'.
+perform bdc_field       using 'RSRD1-TBMA_VAL'
+                              'Z21308EMPL'.
+perform bdc_transaction using 'SE11'.
+
+perform close_group.

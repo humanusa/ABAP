@@ -1,0 +1,44 @@
+*&---------------------------------------------------------------------*
+*&  Include           ZTEST_ABAP8_O01
+*&---------------------------------------------------------------------*
+
+MODULE STATUS_1000 OUTPUT.
+  SET PF-STATUS 'GUISTATUS1'.
+  SET TITLEBAR 'TITLE1'.
+
+    LOOP AT SCREEN.
+    CASE screen-name.
+
+      WHEN 'UPDATE'.
+
+        IF sy-tcode NE 'ZDP_UPD'.
+          screen-invisible = 1.
+          MODIFY SCREEN.
+        ELSE.
+          screen-invisible = 0.
+          MODIFY SCREEN.
+        ENDIF.
+
+      WHEN 'CREATE'.
+
+        IF sy-tcode NE 'ZDP_CRT'.
+          screen-invisible = 1.
+          MODIFY SCREEN.
+        ELSE.
+          screen-invisible = 0.
+          MODIFY SCREEN.
+        ENDIF.
+
+      WHEN 'DISPLAY'.
+
+        IF sy-tcode NE 'ZDP_DISP'.
+          screen-invisible = 1.
+          MODIFY SCREEN.
+        ELSE.
+          screen-invisible = 0.
+          MODIFY SCREEN.
+        ENDIF.
+
+    ENDCASE.
+  ENDLOOP.
+ENDMODULE.                 " STATUS_1000  OUTPUT

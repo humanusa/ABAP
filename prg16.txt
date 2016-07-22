@@ -1,0 +1,48 @@
+REPORT  ZTESTCLASS.
+
+DATA:  string_in  type string,
+       len_out type i.
+
+CLASS string_op DEFINITION.
+
+PUBLIC SECTION.
+METHODS : get_strlen importing value(str1) type string
+                     exporting value(len1) type i.
+methods : constructor.
+class-methods : write_len.
+
+ENDCLASS.
+
+DATA :  inst type ref to string_op.
+
+CREATE object inst.
+
+string_in = 'Infosys'.
+
+call method inst->get_strlen
+exporting
+   str1 = string_in
+importing
+   len1 = len_out.
+
+call method string_op=>write_len.
+
+
+CLASS string_op IMPLEMENTATION.
+
+method get_strlen.
+
+ len1 = strlen( str1 ).
+
+endmethod.
+
+method write_len.
+ write : len_out.
+
+endmethod.
+
+method constructor.
+ write : 'instantiated'.
+endmethod.
+
+ENDCLASS.

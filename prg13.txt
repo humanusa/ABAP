@@ -1,0 +1,76 @@
+*&---------------------------------------------------------------------*
+*& Report  ZTESTAUG28
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------_____________________________________________________*
+
+                      REPORT  ZTESTAUG28.
+
+                      data: l_data1 type i,
+                            l_data2 type i,
+                            l_char1 type c.
+
+                      data l_char type c.
+
+*DATA  Emp_number Type I.
+                      CONSTANTS: c_const type I value 100,
+                                 c_const1 type c value 'A'.
+
+                      DATA:        Emp_number  type I    Value 10,
+                                   Emp_name(30)  Type C value 'venkataraman B',
+                                   emp_lastnam(30) type c,
+                                   Emp_salary        Type P   Decimals 2,
+                                   emp_no(2) type n value '10'.
+
+
+                      initialization.
+                        clear l_data1.
+
+                      start-of-selection.
+
+*                      check l_data1 > l_data2.
+
+                        case emp_no.
+
+                          when '10'.
+                            write: 'employee 10'.
+
+                          when '20'.
+                            write: 'Employee 20'.
+
+                          when others.
+                           write: 'default'.
+                        endcase.
+
+
+
+                        l_data1 = 10.
+                        emp_no = 02.
+                        Emp_number = 15.
+                        move l_data1 to l_data2.
+                        move emp_name+7(10) to emp_lastnam.
+
+                        if l_data1 > l_data2.
+
+                           write: l_data2.
+
+                        elseif l_data1 = l_data2.
+
+                           write: 'Nothing', l_data1.
+
+                        else.
+
+                           write: l_data2.
+
+                        endif.
+
+                        l_data1 = l_data1 * l_data2.
+*write emp_name to emp_lastnam.
+
+
+
+                      end-of-selection.
+
+                        write: emp_lastnam.

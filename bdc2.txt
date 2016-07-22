@@ -1,0 +1,217 @@
+report ZTEST7881BDC
+       no standard page heading line-size 255.
+
+include bdcrecx1.
+
+parameters: dataset(132) lower case.
+***    DO NOT CHANGE - the generated data section - DO NOT CHANGE    ***
+*
+*   If it is nessesary to change the data section use the rules:
+*   1.) Each definition of a field exists of two lines
+*   2.) The first line shows exactly the comment
+*       '* data element: ' followed with the data element
+*       which describes the field.
+*       If you don't have a data element use the
+*       comment without a data element name
+*   3.) The second line shows the fieldname of the
+*       structure, the fieldname must consist of
+*       a fieldname and optional the character '_' and
+*       three numbers and the field length in brackets
+*   4.) Each field must be type C.
+*
+*** Generated data section with specific formatting - DO NOT CHANGE  ***
+data: begin of record,
+* data element: CLASSTAB
+        TBMA_001(001),
+* data element: TABNAME16
+        TBMA_VAL_002(016),
+* data element: AFFNR
+        EMPID_003(005),
+* data element: SSAL_LEVEL
+        GRADE_004(002),
+* data element: ARBOR
+        LOCATION_005(025),
+* data element: ABTNR
+        PU_006(004),
+* data element: AD_NAME1
+        NAME1_007(040),
+* data element: AD_NAME2
+        NAME2_008(040),
+* data element: AD_STREET
+        STREET1_009(060),
+* data element: AD_STRSPP1
+        STREET2_010(040),
+* data element: ORT02
+        DISTRICT_011(025),
+* data element: REGIO
+        STATE_012(003),
+* data element: LAND1
+        COUNTRY_013(003),
+* data element: CLASSTAB
+        TBMA_014(001),
+* data element: TABNAME16
+        TBMA_VAL_015(016),
+* data element: CLASSTAB
+        TBMA_016(001),
+* data element: TABNAME16
+        TBMA_VAL_017(016),
+* data element: CLASSTAB
+        TBMA_018(001),
+* data element: TABNAME16
+        TBMA_VAL_019(016),
+* data element: CLASSTAB
+        TBMA_020(001),
+* data element: TABNAME16
+        TBMA_VAL_021(016),
+* data element: CLASSTAB
+        TBMA_022(001),
+* data element: TABNAME16
+        TBMA_VAL_023(016),
+      end of record.
+
+*** End generated data section ***
+
+start-of-selection.
+
+DATA: BEGIN OF ITAB_78881EMP OCCURS 0,
+      EMPID LIKE Z78881EMPL-EMPID,
+      GRADE LIKE Z78881EMPL-GRADE,
+      LOCATION LIKE Z78881EMPL-LOCATION,
+      PU LIKE Z78881EMPL-PU,
+      NAME1 LIKE Z78881EMPL-NAME1,
+      NAME2 LIKE Z78881EMPL-NAME2,
+      STREET1 LIKE Z78881EMPL-STREET1,
+      STREET2 LIKE Z78881EMPL-STREET2,
+      DISTRICT LIKE Z78881EMPL-DISTRICT,
+      STATE LIKE Z78881EMPL-STATE,
+      COUNTRY LIKE Z78881EMPL-COUNTRY,
+
+      end of itab_78881emp.
+
+*perform load_file.
+
+perform open_dataset using dataset.
+perform open_group.
+
+do.
+
+read dataset dataset into record.
+if sy-subrc <> 0. exit. endif.
+
+perform bdc_dynpro      using 'SAPMSRD0' '0102'.
+perform bdc_field       using 'BDC_CURSOR'
+                              'RSRD1-TBMA_VAL'.
+perform bdc_field       using 'BDC_OKCODE'
+                              '=SHOW'.
+perform bdc_field       using 'RSRD1-TBMA'
+                              record-TBMA_001.
+perform bdc_field       using 'RSRD1-TBMA_VAL'
+                              record-TBMA_VAL_002.
+perform bdc_dynpro      using 'SAPLSD41' '2200'.
+perform bdc_field       using 'BDC_CURSOR'
+                              'DD02D-TABCLTEXT'.
+perform bdc_field       using 'BDC_OKCODE'
+                              '=TDED'.
+perform bdc_dynpro      using '/1BCDWB/DBZ78881EMPL' '0101'.
+perform bdc_field       using 'BDC_CURSOR'
+                              'Z78881EMPL-COUNTRY'.
+perform bdc_field       using 'BDC_OKCODE'
+                              '=SAVE'.
+perform bdc_field       using 'Z78881EMPL-EMPID'
+                              record-EMPID_003.
+perform bdc_field       using 'Z78881EMPL-GRADE'
+                              record-GRADE_004.
+perform bdc_field       using 'Z78881EMPL-LOCATION'
+                              record-LOCATION_005.
+perform bdc_field       using 'Z78881EMPL-PU'
+                              record-PU_006.
+perform bdc_field       using 'Z78881EMPL-NAME1'
+                              record-NAME1_007.
+perform bdc_field       using 'Z78881EMPL-NAME2'
+                              record-NAME2_008.
+perform bdc_field       using 'Z78881EMPL-STREET1'
+                              record-STREET1_009.
+perform bdc_field       using 'Z78881EMPL-STREET2'
+                              record-STREET2_010.
+perform bdc_field       using 'Z78881EMPL-DISTRICT'
+                              record-DISTRICT_011.
+perform bdc_field       using 'Z78881EMPL-STATE'
+                              record-STATE_012.
+perform bdc_field       using 'Z78881EMPL-COUNTRY'
+                              record-COUNTRY_013.
+perform bdc_dynpro      using '/1BCDWB/DBZ78881EMPL' '0101'.
+perform bdc_field       using 'BDC_OKCODE'
+                              '/EBACK'.
+perform bdc_field       using 'BDC_CURSOR'
+                              'Z78881EMPL-EMPID'.
+perform bdc_dynpro      using 'SAPLSD41' '2200'.
+perform bdc_field       using 'BDC_CURSOR'
+                              'DD02D-TABCLTEXT'.
+perform bdc_field       using 'BDC_OKCODE'
+                              '=WB_BACK'.
+perform bdc_dynpro      using 'SAPMSRD0' '0102'.
+perform bdc_field       using 'BDC_CURSOR'
+                              'RSRD1-TBMA_VAL'.
+perform bdc_field       using 'BDC_OKCODE'
+                              '=BACK'.
+perform bdc_field       using 'RSRD1-TBMA'
+                              record-TBMA_014.
+perform bdc_field       using 'RSRD1-TBMA_VAL'
+                              record-TBMA_VAL_015.
+perform bdc_transaction using 'SE11'.
+
+perform bdc_dynpro      using 'SAPMSRD0' '0102'.
+perform bdc_field       using 'BDC_CURSOR'
+                              'RSRD1-TBMA_VAL'.
+perform bdc_field       using 'BDC_OKCODE'
+                              '=SHOW'.
+perform bdc_field       using 'RSRD1-TBMA'
+                              record-TBMA_016.
+perform bdc_field       using 'RSRD1-TBMA_VAL'
+                              record-TBMA_VAL_017.
+perform bdc_dynpro      using 'SAPLSD41' '2200'.
+perform bdc_field       using 'BDC_CURSOR'
+                              'DD02D-TABCLTEXT'.
+perform bdc_field       using 'BDC_OKCODE'
+                              '=WB_BACK'.
+perform bdc_dynpro      using 'SAPMSRD0' '0102'.
+perform bdc_field       using 'BDC_CURSOR'
+                              'RSRD1-TBMA_VAL'.
+perform bdc_field       using 'BDC_OKCODE'
+                              '=BACK'.
+perform bdc_field       using 'RSRD1-TBMA'
+                              record-TBMA_018.
+perform bdc_field       using 'RSRD1-TBMA_VAL'
+                              record-TBMA_VAL_019.
+perform bdc_transaction using 'SE11'.
+
+perform bdc_dynpro      using 'SAPMSRD0' '0102'.
+perform bdc_field       using 'BDC_CURSOR'
+                              'RSRD1-TBMA_VAL'.
+perform bdc_field       using 'BDC_OKCODE'
+                              '=BACK'.
+perform bdc_field       using 'RSRD1-TBMA'
+                              record-TBMA_020.
+perform bdc_field       using 'RSRD1-TBMA_VAL'
+                              record-TBMA_VAL_021.
+perform bdc_transaction using 'SE11'.
+
+perform bdc_dynpro      using 'SAPMSRD0' '0102'.
+perform bdc_field       using 'BDC_CURSOR'
+                              'RSRD1-TBMA_VAL'.
+perform bdc_field       using 'BDC_OKCODE'
+                              '=BACK'.
+perform bdc_field       using 'RSRD1-TBMA'
+                              record-TBMA_022.
+perform bdc_field       using 'RSRD1-TBMA_VAL'
+                              record-TBMA_VAL_023.
+perform bdc_transaction using 'SE11'.
+
+enddo.
+
+perform close_group.
+
+*form load_file
+
+*data lv_empname
+perform close_dataset using dataset.

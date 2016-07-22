@@ -1,0 +1,145 @@
+*&---------------------------------------------------------------------*
+*& Report  ZTESTABAP8
+*&
+*&---------------------------------------------------------------------*
+*& Author - Deepak
+*&
+*&---------------------------------------------------------------------*
+
+REPORT  ZTESTABAP8.
+
+* declaration of record structure
+TYPES : BEGIN OF record,
+            name(10) type c,
+            age type i,
+        END OF record.
+
+
+* declaration of internal table
+DATA rec TYPE record occurs 10 with header line.
+DATA rec2 TYPE record occurs 10 with header line.
+
+* another way or declaring internal table
+data rec3 type standart table of record.
+
+data record1 type record.
+data record2 type record.
+
+
+*declare structure for ebeln.
+data: rebeln type ebeln.
+
+*declare structure for internal table for ebeln.
+data tebeln type ebeln occurs 5 with header line.
+
+
+*storing first rec
+rec-name = 'deepak'.
+rec-age = 20.
+
+collect rec.
+
+write:/ sy-tabix,rec-name,rec-age.
+
+*storing 2nd rec
+rec-name = 'amar'.
+rec-age = 10.
+
+collect rec.
+
+write:/ sy-tabix,rec-name,rec-age.
+
+*using append
+record1-name = 'chetan'.
+record1-age = 15.
+
+APPEND record1 to rec.
+
+write:/ sy-tabix,rec-name,rec-age.
+
+*adding record
+record1-name = 'bhagat'.
+record1-age = 25.
+
+APPEND record1 to rec.
+
+write:/ sy-tabix,rec-name,rec-age.
+
+*move
+move rec[] to rec2[].
+
+*dumping table rec
+write:/'Dumping table rec'.
+
+loop at rec.
+  write:/ sy-tabix, rec-name,
+    rec-age.
+endloop.
+
+*dumping table rec2
+write:/ 'Dumping table rec2'.
+
+loop at rec2.
+  write:/ sy-tabix, rec2-name,
+    rec2-age.
+endloop.
+
+*deleting record
+delete rec index 1.
+
+*dumping table rec after delete
+write:/'Dumping table rec after delete'.
+
+loop at rec.
+  write:/ sy-tabix, rec-name,
+    rec-age.
+endloop.
+
+
+*using index to display
+write :/'Using index to display'.
+
+loop at rec.
+read table rec into record2 index sy-tabix.
+  write:/ sy-tabix, record2-name,
+    record2-age.
+endloop.
+
+*displaying with key
+write /'Display with key'.
+read table rec into record2 with key name = 'amar'.
+  write:/ sy-tabix, record2-name,
+    record2-age.
+
+*select single record from table
+
+select single ebeln from ekpo into rebeln.
+write :/'Ebeln dump'.
+write :/ rebeln.
+
+*endselect.
+
+*select multi record from table ebeln into internal table
+
+select ebeln from ekpo into table tebeln.
+
+write :/'Internal table dump'.
+
+*how it is printing 16 entry when there are only 5 rows in it.
+read table tebeln into rebeln index 16.
+
+write :/ rebeln.
+
+*print entire tebeln - this is causing infinite loop
+write:/'Dumping entire internal table'.
+
+loop at tebeln.
+
+read table tebeln index sy-tabix.
+
+*read table tebeln into rebeln index sy-tabix.
+
+write :/ tebeln.
+endloop.
+
+*endselect.

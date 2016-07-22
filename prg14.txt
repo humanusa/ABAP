@@ -1,0 +1,149 @@
+REPORT  ztestbapi.
+
+PARAMETER : p_file(100) TYPE c.
+
+DATA : t_file TYPE STANDARD TABLE OF line WITH HEADER LINE.
+DATA : BEGIN OF t_itab OCCURS 0,
+       auart TYPE auart,
+       kunag TYPE kunnr,
+       kunwe TYPE kunnr,
+       vkorg TYPE vkorg,
+       vtweg TYPE vtweg,
+       spart TYPE spart,
+       matnr TYPE matnr,
+       kwmeng TYPE char13,
+   END OF t_itab.
+
+DATA : BEGIN OF t_output OCCURS 0,
+        soldto  TYPE kunnr,
+        shipto TYPE kunnr,
+        auart TYPE auart,
+        vbeln TYPE vbeln,
+        message(100) TYPE c,
+       END OF t_output.
+
+DATA : s_header LIKE bapisdhd1,
+       t_partner TYPE STANDARD TABLE OF bapiparnr WITH HEADER LINE,
+       t_items TYPE STANDARD TABLE OF bapisditm WITH HEADER LINE,
+       w_vbeln TYPE vbeln,
+       t_return TYPE STANDARD TABLE OF bapiret2 WITH HEADER LINE,
+       filename TYPE string.
+
+
+
+filename = p_file.
+
+DATA : s_itab LIKE t_itab.
+
+* read file
+CALL FUNCTION 'GUI_UPLOAD'
+  EXPORTING
+    filename                = filename
+  TABLES
+    data_tab                = t_file.
+
+* Convert file
+LOOP AT t_file.
+  CLEAR t_itab.
+  SPLIT t_file-line AT ';' INTO t_itab-auart
+                                t_itab-kunag
+                                t_itab-kunwe
+                                t_itab-vkorg
+                                t_itab-vtweg
+                                t_itab-spart
+                                t_itab-matnr
+                                t_itab-kwmeng.
+
+* Conversion exits
+  CALL FUNCTION 'CONVERSION_EXIT_AUART_INPUT'
+    EXPORTING
+      input  = t_itab-auart
+    IMPORTING
+      output = t_itab-auart.
+
+  CALL FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
+    EXPORTING
+      input  = t_itab-kunag
+    IMPORTING
+      output = t_itab-kunag.
+
+  CALL FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
+    EXPORTING
+      input  = t_itab-kunwe
+    IMPORTING
+      output = t_itab-kunwe.
+
+  CALL FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
+    EXPORTING
+      input  = t_itab-matnr
+    IMPORTING
+      output = t_itab-matnr.
+
+  APPEND t_itab.
+ENDLOOP.
+
+REFRESH t_output.
+
+* Sort table
+SORT t_itab BY auart kunag kunwe.
+
+LOOP AT t_itab .
+  s_itab = t_itab.
+
+* At every new ship to, fill the sales order header details.
+  AT NEW kunwe.
+
+    CLEAR s_header. REFRESH t_partner. REFRESH t_items.
+
+    s_header-doc_type = s_itab-auart.
+    s_header-sales_org = s_itab-vkorg.
+    s_header-distr_chan = s_itab-vtweg.
+    s_header-division = s_itab-spart.
+
+    t_partner-partn_role = 'AG'.
+    t_partner-partn_numb = s_itab-kunag.
+    APPEND t_partner.
+
+
+    t_partner-partn_role = 'WE'.
+    t_partner-partn_numb = s_itab-kunwe.
+    APPEND t_partner.
+
+  ENDAT.
+
+* fill th item details.
+  t_items-material = s_itab-matnr.
+  t_items-target_qty = s_itab-kwmeng.
+  APPEND t_items.
+
+
+  AT END OF kunwe.
+* BAPI call.
+    CALL FUNCTION 'BAPI_SALESORDER_CREATEFROMDAT2'
+      EXPORTING
+        order_header_in = s_header
+      IMPORTING
+        salesdocument   = w_vbeln
+      TABLES
+        return          = t_return
+        order_items_in  = t_items
+        order_partners  = t_partner.
+
+    CLEAR t_output.
+    t_output-soldto = s_itab-kunag.
+    t_output-shipto = s_itab-kunwe.
+    t_output-vbeln = w_vbeln.
+    IF w_vbeln IS INITIAL.
+      t_output-message = 'Error in creation'.
+    ELSE.
+* Transaction commit.
+      CALL FUNCTION 'BAPI_TRANSACTION_COMMIT'.
+    ENDIF.
+    APPEND t_output.
+  ENDAT.
+ENDLOOP.
+
+* Output log
+LOOP AT t_output.
+  WRITE : / t_output-soldto ,space ,t_output-shipto,space,t_output-vbeln,space,t_output-message.
+ENDLOOP.

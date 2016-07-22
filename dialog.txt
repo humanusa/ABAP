@@ -1,0 +1,55 @@
+*&---------------------------------------------------------------------*
+*& Module Pool       ZTEST_ABAP8_DIALOG
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+REPORT ZTEST_ABAP8_DIALOG.
+
+*&SPWIZARD: FUNCTION CODES FOR TABSTRIP 'TAB2'
+CONSTANTS: BEGIN OF C_TAB2,
+             TAB1 LIKE SY-UCOMM VALUE 'TAB2_FC1',
+             TAB2 LIKE SY-UCOMM VALUE 'TAB2_FC2',
+           END OF C_TAB2.
+*&SPWIZARD: DATA FOR TABSTRIP 'TAB2'
+CONTROLS:  TABst2 TYPE TABSTRIP.
+DATA:      BEGIN OF G_TAB2,
+*             SUBSCREEN   LIKE SY-DYNNR,
+              dynnr LIKE SY-DYNNR,
+             PROG        LIKE SY-REPID VALUE 'ZTEST_ABAP8_DIALOG',
+           END OF G_TAB2.
+DATA:      OK_CODE LIKE SY-UCOMM.
+DATA :     PUSHED LIKE SY-UCOMM VALUE C_TAB2-TAB1.
+
+
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_2000  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE USER_COMMAND_2000 INPUT.
+
+  CASE OK_CODE.
+
+    WHEN 'TAB2_FC1'.
+      PUSHED = 'TAB2_FC1'.
+    WHEN 'TAB2_FC2'.
+      PUSHED = 'TAB2_FC2'.
+
+    WHEN 'EXIT'.
+      LEAVE PROGRAM.
+  ENDCASE.
+
+ENDMODULE.                 " USER_COMMAND_2000  INPUT
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_2000  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE STATUS_2000 OUTPUT.
+*  SET PF-STATUS 'xxxxxxxx'.
+*  SET TITLEBAR 'xxx'.
+
+ENDMODULE.                 " STATUS_2000  OUTPUT

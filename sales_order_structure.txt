@@ -1,0 +1,2 @@
+order type;sold to; ship to; sales org;distributon channel;division;material;quantity
+vbak-auart;vbak-kunner;vbak-kunner;vbak-vtweg;vbak-spart;vbap-matnr;vbap-kmeng

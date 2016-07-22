@@ -1,0 +1,578 @@
+*$*$********************************************************************
+*$*$    PROGRAM ID    : ZMNR_MINESWEEPER
+*$*$    TITLE         : MINESWEEPER GAME
+*$*$    CREATION DATE : 03/03/2009
+*$*$    AUTHOR        : DEEPAK HADA
+*$*$    DESIGNER      : DEEPAK HADA
+*$*$    OWNERSHIP     : DEEPAK HADA.
+*$*$--------------------------------------------------------------------
+*$*$    DESCRIPTION   : MINESWEEPER GAME
+*$*$********************************************************************
+*$*$    CHANGE HISTORY
+*$*$--------------------------------------------------------------------
+*$*$ DATE        | T-Num  | Description                 | Reference
+**** 20090303    |        |                             |
+****             |        |                             |
+****             |        |                             |
+*$*$********************************************************************
+
+
+report  z21308_mine2                             .
+
+type-pools: slis.
+
+*$*$********************************************************************
+*$*$    GLOBAL TYPES
+*$*$    naming convention: "y_name"
+*$*$********************************************************************
+*{
+
+types  : begin of y_grid ,
+
+       l11 type c,
+       l12 type c,
+       l13 type c,
+       l14 type c,
+       l15 type c,
+       l16 type c,
+       l17 type c,
+       l18 type c,
+      end of y_grid.
+
+*}
+
+data: t_fieldcat type slis_t_fieldcat_alv with header line.
+
+
+*$*$********************************************************************
+*$*$    GLOBAL INTERNAL TABLES (with INCLUDE STRUCTURE)
+*$*$    naming convention: "i_name"
+*$*$********************************************************************
+*{
+
+*}
+
+
+*$*$********************************************************************
+*$*$    GLOBAL INTERNAL TABLES (with CUSTOM STRUCTURE)
+*$*$    naming convention: "t_name"
+*$*$********************************************************************
+*{
+
+data : t_grid1 type standard table of y_grid with header line.
+
+data : w_grid2 type y_grid occurs 1 with header line.
+
+data : begin of t_output occurs 0,
+       l11 type c,
+       l12 type c,
+       l13 type c,
+       l14 type c,
+       l15 type c,
+       l16 type c,
+       l17 type c,
+       l18 type c,
+
+      end of t_output.
+
+*}
+
+*$*$********************************************************************
+*$*$    Global Elementary Variables
+*$*$    naming convention: "w_name"
+*$*$********************************************************************
+*{
+
+data : w_num type i.
+
+data : w_num2 type i.
+
+data : w_deathflag type c.
+
+data : w_listcount type i.
+
+data : w_closecount type i.
+
+data : w_starttime type t.
+
+data : w_diff type t.
+
+*}
+
+
+*$*$********************************************************************
+*$*$    GLOBAL CONSTANTS
+*$*$    naming convention: "c_name"
+*$*$********************************************************************
+*{
+
+data : c_mine type c.
+data : c_blank type c.
+data : c_nummine1 type c.
+data : c_nummine2 type c.
+data : c_zero type c.
+data : c_true type c.
+data : c_false type c.
+data : c_minecount type c.
+
+*}
+
+
+*$*$********************************************************************
+*$*$    INITIALIZATION
+*$*$********************************************************************
+*{
+initialization.
+
+  c_mine = 'M'.
+  c_blank = 'B'.
+  c_nummine1 = '1'.
+  c_nummine2 = '2'.
+  c_zero = 'O'.
+  c_true = 'Y'.
+  c_false = 'N'.
+  c_minecount = '3'.
+  w_closecount = '0'.
+  w_starttime = sy-uzeit.
+
+*}
+
+*$*$********************************************************************
+*$*$    START-OF-SELECTION
+*$*$********************************************************************
+*{
+
+start-of-selection.
+
+
+
+perform append_grid using c_nummine1 c_nummine1 c_nummine1 c_blank
+                          c_blank c_blank c_blank c_blank.
+
+
+perform append_grid using c_nummine1 c_mine c_nummine1 c_blank
+                          c_blank c_blank c_blank c_blank.
+
+
+  w_grid2-l11 = c_blank.
+  w_grid2-l12 = c_blank.
+  w_grid2-l13 = c_blank.
+  w_grid2-l14 = c_nummine1.
+  w_grid2-l15 = c_nummine1.
+  w_grid2-l16 = c_nummine1.
+  w_grid2-l17 = c_blank.
+  w_grid2-l18 = c_blank.
+
+  append w_grid2 to t_grid1.
+
+  w_grid2-l11 = c_blank.
+  w_grid2-l12 = c_blank.
+  w_grid2-l13 = c_blank.
+  w_grid2-l14 = c_nummine1.
+  w_grid2-l15 = c_mine.
+  w_grid2-l16 = c_nummine1.
+  w_grid2-l17 = c_blank.
+  w_grid2-l18 = c_blank.
+
+  append w_grid2 to t_grid1.
+
+  w_grid2-l11 = c_blank.
+  w_grid2-l12 = c_blank.
+  w_grid2-l13 = c_blank.
+  w_grid2-l14 = c_nummine1.
+  w_grid2-l15 = c_nummine2.
+  w_grid2-l16 = c_nummine2.
+  w_grid2-l17 = c_nummine1.
+  w_grid2-l18 = c_blank.
+
+  append w_grid2 to t_grid1.
+
+  w_grid2-l11 = c_blank.
+  w_grid2-l12 = c_blank.
+  w_grid2-l13 = c_blank.
+  w_grid2-l14 = c_blank.
+  w_grid2-l15 = c_nummine1.
+  w_grid2-l16 = c_mine.
+  w_grid2-l17 = c_nummine1.
+  w_grid2-l18 = c_blank.
+
+  append w_grid2 to t_grid1.
+
+  w_grid2-l11 = c_blank.
+  w_grid2-l12 = c_blank.
+  w_grid2-l13 = c_blank.
+  w_grid2-l14 = c_blank.
+  w_grid2-l15 = c_nummine1.
+  w_grid2-l16 = c_nummine1.
+  w_grid2-l17 = c_nummine1.
+  w_grid2-l18 = c_blank.
+
+  append w_grid2 to t_grid1.
+
+  w_grid2-l11 = c_zero.
+  w_grid2-l12 = c_zero.
+  w_grid2-l13 = c_zero.
+  w_grid2-l14 = c_zero.
+  w_grid2-l15 = c_zero.
+  w_grid2-l16 = c_zero.
+  w_grid2-l17 = c_zero.
+  w_grid2-l18 = c_zero.
+
+  do 8 times.
+
+    append w_grid2 to t_output.
+
+  enddo.
+
+*LOOP AT t_grid.
+
+*  WRITE : / 'GRID1 :', t_grid-L11, t_grid-L12, t_grid-L13, t_grid-L14.
+
+*ENDLOOP.
+
+*  WRITE : / 'Minesweeper : ',
+*        : / '-----------  '.
+*
+  w_listcount = 1.
+
+  perform write-grid.
+
+end-of-selection.
+*}
+
+*$*$********************************************************************
+*$*$    AT LINE-SELECTION
+*$*$********************************************************************
+*{
+
+at line-selection.
+
+  if w_listcount > 1.
+    back.
+  elseif w_listcount = 1.
+    w_listcount = w_listcount + 1.
+  endif.
+
+  sy-lsind = 1.
+
+  w_num = sy-curow - 3.
+  w_num2 = ( sy-cucol ) / 2.
+
+*  WRITE : /,'CUROW', w_num,
+*  'CUCOL', w_num2 , ' SY-LSIND : ', sy-lsind.
+*
+  w_diff = sy-uzeit  - w_starttime.
+
+  write : / 'Minesweeper : ', ' Current Time : ', sy-uzeit,
+  ' Start time: ', w_starttime , '  Diff ', w_diff,
+        : / '----------------------------  '.
+
+  read table t_grid1 into w_grid2 index w_num.
+
+*write : / w_grid2-l11, w_grid2-l12, w_grid2-l13, w_grid2-l14.
+
+  perform process-input.
+
+  perform write-grid.
+
+  if w_deathflag = c_true.
+*    WRITE :/ 'You are dead!!'.
+
+    message 'You  are Dead :( !!!!!!' type 'I'.
+
+  endif.
+
+  perform check-win.
+
+  if w_closecount = c_minecount.
+    write :/ 'You win!!'.
+
+    message 'You win !!!!!!' type 'I'.
+
+  endif.
+
+*  do.
+*  w_diff = sy-uzeit  - w_starttime.
+*  if w_diff > 59.
+*     write : / '1 min up'.
+*     exit.
+*  endif.
+*  write : /' diff : ', w_diff.
+*  enddo.
+
+*}
+
+*&--------------------------------------------------------------------*
+*&      Form  write-grid
+*&--------------------------------------------------------------------*
+*       text
+*---------------------------------------------------------------------*
+
+form write-grid.
+
+  write : / 't-OUTPUT :'.
+
+  loop at t_output.
+
+    format hotspot.
+    format hotspot off.
+    format hotspot.
+    write / t_output-l11 color 5.
+    format hotspot off.
+
+    format hotspot.
+    write   t_output-l12 color 5.
+    format hotspot off.
+
+    format hotspot.
+    write   t_output-l13 color 5.
+    format hotspot off.
+
+    format hotspot.
+    write t_output-l14 color 5.
+    format hotspot off.
+
+    format hotspot.
+    write  t_output-l15 color 5.
+    format hotspot off.
+
+    format hotspot.
+    write  t_output-l16 color 5.
+    format hotspot off.
+
+    format hotspot.
+    write  t_output-l17 color 5.
+    format hotspot off.
+
+    format hotspot.
+    write  t_output-l18 color 5.
+    format hotspot off.
+
+  endloop.
+
+endform.                    "write-grid
+
+*&--------------------------------------------------------------------*
+*&      Form  process-input
+*&--------------------------------------------------------------------*
+*       text
+*---------------------------------------------------------------------*
+form process-input.
+
+  if w_num2 = 1.
+    read table t_output index w_num.
+
+    if w_grid2-l11 = c_blank.
+      t_output-l11 = ' '.
+    elseif w_grid2-l11 = c_mine.
+      w_deathflag = c_true.
+      t_output-l11 = w_grid2-l11.
+    else.
+      t_output-l11 = w_grid2-l11.
+    endif.
+
+    modify t_output index w_num.
+
+  elseif w_num2 = 2.
+    read table t_output index w_num.
+
+    if w_grid2-l12 = c_blank.
+      t_output-l12 = ' '.
+    elseif w_grid2-l12 = c_mine.
+      w_deathflag = c_true.
+      t_output-l12 = w_grid2-l12.
+    else.
+      t_output-l12 = w_grid2-l12.
+    endif.
+
+    modify t_output index w_num.
+
+  elseif w_num2 = 3.
+    read table t_output index w_num.
+
+    if w_grid2-l13 = c_blank.
+      t_output-l13 = ' '.
+    elseif w_grid2-l13 = c_mine.
+      w_deathflag = c_true.
+      t_output-l13 = w_grid2-l13.
+    else.
+      t_output-l13 = w_grid2-l13.
+
+    endif.
+
+    modify t_output index w_num.
+
+  elseif w_num2 = 4.
+    read table t_output index w_num.
+
+    if w_grid2-l14 = c_blank.
+      t_output-l14 = ' '.
+    elseif w_grid2-l14 = c_mine.
+      w_deathflag = c_true.
+      t_output-l14 = w_grid2-l14.
+    else.
+      t_output-l14 = w_grid2-l14.
+    endif.
+
+    modify t_output index w_num.
+
+  elseif w_num2 = 5.
+    read table t_output index w_num.
+
+    if w_grid2-l15 = c_blank.
+      t_output-l15 = ' '.
+    elseif w_grid2-l15 = c_mine.
+      w_deathflag = c_true.
+      t_output-l15 = w_grid2-l15.
+    else.
+      t_output-l15 = w_grid2-l15.
+    endif.
+
+    modify t_output index w_num.
+
+  elseif w_num2 = 6.
+    read table t_output index w_num.
+
+    if w_grid2-l16 = c_blank.
+      t_output-l16 = ' '.
+    elseif w_grid2-l16 = c_mine.
+      w_deathflag = c_true.
+      t_output-l16 = w_grid2-l16.
+    else.
+      t_output-l16 = w_grid2-l16.
+    endif.
+
+    modify t_output index w_num.
+
+  elseif w_num2 = 7.
+    read table t_output index w_num.
+
+    if w_grid2-l17 = c_blank.
+      t_output-l17 = ' '.
+    elseif w_grid2-l17 = c_mine.
+      w_deathflag = c_true.
+      t_output-l17 = w_grid2-l17.
+    else.
+      t_output-l17 = w_grid2-l17.
+    endif.
+
+    modify t_output index w_num.
+
+  elseif w_num2 = 8.
+    read table t_output index w_num.
+
+    if w_grid2-l18 = c_blank.
+      t_output-l18 = ' '.
+    elseif w_grid2-l18 = c_mine.
+      w_deathflag = c_true.
+      t_output-l18 = w_grid2-l18.
+    else.
+      t_output-l18 = w_grid2-l18.
+    endif.
+
+    modify t_output index w_num.
+
+  endif.
+
+endform.                    "process-input
+
+
+*&--------------------------------------------------------------------*
+*&      Form  process-input
+*&--------------------------------------------------------------------*
+*       text
+*---------------------------------------------------------------------*
+
+form check-win.
+
+  w_closecount = 0.
+
+  loop at t_output.
+
+    if t_output-l11 = c_zero.
+      w_closecount = w_closecount  + 1.
+    endif.
+    if t_output-l12 = c_zero.
+      w_closecount = w_closecount  + 1.
+    endif.
+    if t_output-l13 = c_zero.
+      w_closecount = w_closecount  + 1.
+    endif.
+    if t_output-l14 = c_zero.
+      w_closecount = w_closecount  + 1.
+    endif.
+
+    if t_output-l15 = c_zero.
+      w_closecount = w_closecount  + 1.
+    endif.
+
+    if t_output-l16 = c_zero.
+      w_closecount = w_closecount  + 1.
+    endif.
+
+    if t_output-l17 = c_zero.
+      w_closecount = w_closecount  + 1.
+    endif.
+
+    if t_output-l18 = c_zero.
+      w_closecount = w_closecount  + 1.
+    endif.
+
+  endloop.
+
+endform.                    "process-input
+*&---------------------------------------------------------------------*
+*&      Form  append_grid
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_C_NUMMINE1C_NUMMINE1  text
+*      -->P_C_NUMMINE1  text
+*      -->P_C_BLANK  text
+*      -->P_C_BLANK  text
+*      -->P_C_BLANK  text
+*      -->P_C_BLANK  text
+*      -->P_C_BLANK  text
+*----------------------------------------------------------------------*
+form append_grid  using    p_c_nummine1
+                           p_c_nummine1
+                           p_c_nummine1
+                           p_c_blank
+                           p_c_blank
+                           p_c_blank
+                           p_c_blank
+                           p_c_blank.
+
+  w_grid2-l11 = p_c_nummine1.
+  w_grid2-l12 = p_c_nummine1.
+  w_grid2-l13 = p_c_nummine1.
+  w_grid2-l14 = p_c_blank.
+  w_grid2-l15 = p_c_blank.
+  w_grid2-l16 = p_c_blank.
+  w_grid2-l17 = p_c_blank.
+  w_grid2-l18 = p_c_blank.
+
+  append w_grid2 to t_grid1.
+
+endform.                    " append_grid
+
+
+
+*$*$********************************************************************
+*$*$    TABLES
+*$*$********************************************************************
+*{
+
+*}
+
+
+SELECT [fields]
+  FROM [table]
+  INTO [receiving data object]
+ WHERE [logical conditions].
+
+
+•	The MOVE command is to be used instead of “=”. The equal sign should be used only for READ TABLE statements and computations.
+
+* to use text elements for selection screen items
+* To use field symbols for Internal tables

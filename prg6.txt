@@ -1,0 +1,79 @@
+*&---------------------------------------------------------------------*
+*& Report  ZTEST8
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+REPORT  ZTEST8.
+
+DATA l_data1 type i.
+DATA l_data2 type i.
+
+data L_char type c.
+
+data emp_number type i.
+constants c_const type i value 100.
+
+*data emp_surname type c.
+
+data: emp_number2 type i value 100,
+emp_name(30) type c value 'testpgm',
+emp_salary type p decimals 2,
+emp_lastname(5) type c,
+emp_no(2) type n.
+
+initialization.
+  clear l_data1.
+
+start-of-selection.
+
+  l_data1 = 1.
+  l_char = 'test prog'.
+  emp_no = 03.
+  emp_number = 15.
+  move l_data1 to l_data2.
+
+move emp_name+4(3) to emp_lastname.
+
+case emp_no.
+
+when : 01.
+write: 'no. 1'.
+when : 02.
+write : 'no.2'.
+when : others.
+write: 'else'.
+
+endcase.
+
+do 10 times.
+
+write : 'do  test 10'.
+
+enddo.
+
+do.
+
+if emp_no = 03.
+exit.
+endif.
+
+write 'do with if'.
+
+enddo.
+
+write 'after exit'.
+
+
+*multiple
+*comment
+
+
+
+*  write emp_name to emp_lastname.
+
+end-of-selection.
+
+  write: emp_lastname.

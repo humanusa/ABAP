@@ -1,0 +1,54 @@
+*&---------------------------------------------------------------------*
+*&  Include           ZTEST_ABAP8_A01
+*&---------------------------------------------------------------------*
+MODULE USER_COMMAND_1000 INPUT.
+
+
+  TABLES: Z26EMPL.
+
+  DATA wa_po TYPE Z26EMPL.
+
+  CASE sy-ucomm.
+
+    WHEN 'V_UPDATE'.
+      wa_po-EMPID = Z26EMPL-EMPID.
+      wa_po-GRADE = Z26EMPL-GRADE.
+      wa_po-LOCATION = Z26EMPL-LOCATION.
+      wa_po-PU = Z26EMPL-PU.
+
+      MODIFY Z26EMPL FROM wa_po.
+
+      MESSAGE 'Saved' TYPE 'I'.
+
+    WHEN 'V_CHANGE'.
+
+      wa_po-EMPID = Z26EMPL-EMPID.
+      wa_po-GRADE = Z26EMPL-GRADE.
+      wa_po-LOCATION = Z26EMPL-LOCATION.
+      wa_po-PU = Z26EMPL-PU.
+
+      MODIFY Z26EMPL FROM wa_po.
+
+    WHEN 'V_DISPLAY'.
+
+      SELECT EMPID GRADE LOCATION PU
+        FROM Z26EMPL
+          INTO CORRESPONDING FIELDS OF wa_po
+             WHERE EMPID = Z26EMPL-EMPID.
+
+      Z26EMPL-EMPID = wa_po-EMPID.
+      Z26EMPL-GRADE = wa_po-GRADE.
+      Z26EMPL-LOCATION = wa_po-LOCATION.
+      Z26EMPL-PU = wa_po-PU.
+
+        CALL SCREEN '1000'.
+      ENDSELECT.
+    WHEN 'EXIT'.
+
+      LEAVE PROGRAM.
+
+  ENDCASE.
+
+
+
+ENDMODULE.                 " USER_COMMAND_1000  INPUT

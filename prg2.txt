@@ -1,0 +1,313 @@
+
+*& Report  ZTEST1_SCRIPT
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+REPORT  ZTEST1_SCRIPT.                   .
+*********
+TABLES : VBRK.
+******
+DATA: BEGIN OF IT_INV OCCURS 0,
+ IVBELN TYPE  VBRK-VBELN,
+IKUNRG TYPE VBRK-KUNRG,
+IFKDAT TYPE VBRK-FKDAT,
+IXBLNR TYPE VBRK-XBLNR,
+END OF IT_INV,
+
+BEGIN OF IT_ADRC OCCURS 0,
+  IVBELN TYPE  VBRK-VBELN,
+  INAME TYPE ADRC-NAME1,
+  ISTREET TYPE ADRC-STREET,
+  ICITY1 TYPE ADRC-CITY1,
+  IPOST_CODE1 TYPE ADRC-POST_CODE1,
+  ICOUNTRY TYPE ADRC-COUNTRY,
+  ITEL_NUMBER TYPE ADRC-TEL_NUMBER,
+END OF IT_ADRC.
+
+
+DATA :BEGIN OF ITEM OCCURS 0,
+MATNR TYPE VBRP-MATNR,
+ARKTX TYPE VBRP-ARKTX,
+FKIMG TYPE VBRP-FKIMG,
+VRKMG TYPE VBRP-VRKME,
+NETWR TYPE VBRP-NETWR,
+WAERK TYPE  VBRK-WAERK,
+END OF ITEM.
+
+DATA : BEGIN OF SUBT OCCURS 0,
+NETWR TYPE VBRK-NETWR,
+WAERK TYPE  VBRK-WAERK,
+END OF SUBT.
+
+**********select screen
+PARAMETERS S_VBELN TYPE VBRK-VBELN.
+
+**********invoice
+SELECT SINGLE
+VBELN
+KUNRG
+FKDAT
+XBLNR
+FROM VBRK INTO IT_INV  WHERE VBELN = S_VBELN.
+
+************address
+
+SELECT SINGLE
+V~VBELN
+A~NAME1
+A~STREET
+A~CITY1
+A~POST_CODE1
+A~COUNTRY
+A~TEL_NUMBER INTO  IT_ADRC
+FROM ADRC AS A JOIN KNA1 AS K ON A~ADDRNUMBER = K~ADRNR
+               JOIN VBRK AS V ON K~KUNNR = V~KUNRG
+WHERE A~DATE_FROM <= SY-DATUM  AND A~DATE_TO >= SY-DATUM AND V~VBELN =
+S_VBELN .
+*DATA D TYPE SY-DATUM.
+*D = SY-DATUM.
+
+**************ITEM DETAILS
+
+
+
+
+SELECT
+V~MATNR
+V~ARKTX
+V~FKIMG
+V~VRKME
+V~NETWR
+K~WAERK INTO TABLE ITEM
+ FROM VBRP AS V JOIN VBRK AS K ON  K~VBELN = V~VBELN WHERE V~VBELN =
+S_VBELN.
+********************SUB TOTAL
+SELECT SINGLE NETWR WAERK FROM VBRK INTO  SUBT WHERE VBELN = S_VBELN.
+
+*loop at ITEM.
+**write : / ITEM-MATNR,ITEM-ARKTX.
+*endloop.
+
+****************************OPEN FUN
+*LOOP AT IT_ADRC.
+
+CALL FUNCTION 'OPEN_FORM'
+ EXPORTING
+*   APPLICATION                       = 'TX'
+*   ARCHIVE_INDEX                     =
+*   ARCHIVE_PARAMS                    =
+*   DEVICE                            = 'PRINTER'
+*   DIALOG                            = 'X'.
+    FORM                              = 'ZTEST1_SCRIPT'
+*   LANGUAGE                          = SY-LANGU
+*   OPTIONS                           =
+*   MAIL_SENDER                       =
+*   MAIL_RECIPIENT                    =
+*   MAIL_APPL_OBJECT                  =
+*   RAW_DATA_INTERFACE                = '*'
+* IMPORTING
+*   LANGUAGE                          =
+*   NEW_ARCHIVE_PARAMS                =
+*   RESULT                            =
+* EXCEPTIONS
+*   CANCELED                          = 1
+*   DEVICE                            = 2
+*   FORM                              = 3
+*   OPTIONS                           = 4
+*   UNCLOSED                          = 5
+*   MAIL_OPTIONS                      = 6
+*   ARCHIVE_ERROR                     = 7
+*   INVALID_FAX_NUMBER                = 8
+*   MORE_PARAMS_NEEDED_IN_BATCH       = 9
+*   SPOOL_ERROR                       = 10
+*   CODEPAGE                          = 11
+*   OTHERS                            = 12
+          .
+IF SY-SUBRC <> 0.
+* MESSAGE ID SY-MSGID TYPE SY-MSGTY NUMBER SY-MSGNO
+*         WITH SY-MSGV1 SY-MSGV2 SY-MSGV3 SY-MSGV4.
+ENDIF.
+
+
+************************ START FUN
+
+CALL FUNCTION 'START_FORM'
+ EXPORTING
+*   ARCHIVE_INDEX          =
+*   FORM                   = 'ZTEST1_SCRIPT'
+*   LANGUAGE               = ' '
+   STARTPAGE              = 'PAGE1'
+*   PROGRAM                = 'ZTEST1_SCRIPT'
+*   MAIL_APPL_OBJECT       =
+* IMPORTING
+*   LANGUAGE               =
+* EXCEPTIONS
+*   FORM                   = 1
+*   FORMAT                 = 2
+*   UNENDED                = 3
+*   UNOPENED               = 4
+*   UNUSED                 = 5
+*   SPOOL_ERROR            = 6
+*   CODEPAGE               = 7
+*   OTHERS                 = 8
+          .
+IF SY-SUBRC <> 0.
+* MESSAGE ID SY-MSGID TYPE SY-MSGTY NUMBER SY-MSGNO
+*         WITH SY-MSGV1 SY-MSGV2 SY-MSGV3 SY-MSGV4.
+ENDIF.
+
+****************WRITE FUN
+CALL FUNCTION 'WRITE_FORM'
+ EXPORTING
+   ELEMENT                        = 'INVOICE'
+*   FUNCTION                       = 'SET'
+*   TYPE                           = 'BODY'
+   WINDOW                         = 'INVO'
+* IMPORTING
+*   PENDING_LINES                  =
+ EXCEPTIONS
+   ELEMENT                        = 1
+   FUNCTION                       = 2
+   TYPE                           = 3
+   UNOPENED                       = 4
+   UNSTARTED                      = 5
+   WINDOW                         = 6
+   BAD_PAGEFORMAT_FOR_PRINT       = 7
+   SPOOL_ERROR                    = 8
+   CODEPAGE                       = 9
+   OTHERS                         = 10
+          .
+IF SY-SUBRC <> 0.
+* MESSAGE ID SY-MSGID TYPE SY-MSGTY NUMBER SY-MSGNO
+*         WITH SY-MSGV1 SY-MSGV2 SY-MSGV3 SY-MSGV4.
+ENDIF.
+
+*loop at IT_ADRC WHERE IVBELN = S_VBELN,
+CALL FUNCTION 'WRITE_FORM'
+ EXPORTING
+   ELEMENT                        = 'ADD1'
+*   FUNCTION                       = 'SET'
+*   TYPE                           = 'BODY'
+   WINDOW                         = 'ADD'
+* IMPORTING
+*   PENDING_LINES                  =
+ EXCEPTIONS
+   ELEMENT                        = 1
+   FUNCTION                       = 2
+   TYPE                           = 3
+   UNOPENED                       = 4
+   UNSTARTED                      = 5
+   WINDOW                         = 6
+   BAD_PAGEFORMAT_FOR_PRINT       = 7
+   SPOOL_ERROR                    = 8
+   CODEPAGE                       = 9
+   OTHERS                         = 10
+          .
+IF SY-SUBRC <> 0.
+* MESSAGE ID SY-MSGID TYPE SY-MSGTY NUMBER SY-MSGNO
+*         WITH SY-MSGV1 SY-MSGV2 SY-MSGV3 SY-MSGV4.
+ENDIF.
+*ENDLOOP.
+
+
+********** FOR ITEM WRITE
+
+****************WRITE FUN
+LOOP AT ITEM.
+
+CALL FUNCTION 'WRITE_FORM'
+ EXPORTING
+   ELEMENT                        = 'ITEM'
+*   FUNCTION                       = 'SET'
+*   TYPE                           = 'BODY'
+   WINDOW                         = 'MAIN'
+* IMPORTING
+*   PENDING_LINES                  =
+ EXCEPTIONS
+   ELEMENT                        = 1
+   FUNCTION                       = 2
+   TYPE                           = 3
+   UNOPENED                       = 4
+   UNSTARTED                      = 5
+   WINDOW                         = 6
+   BAD_PAGEFORMAT_FOR_PRINT       = 7
+   SPOOL_ERROR                    = 8
+   CODEPAGE                       = 9
+   OTHERS                         = 10
+          .
+IF SY-SUBRC <> 0.
+* MESSAGE ID SY-MSGID TYPE SY-MSGTY NUMBER SY-MSGNO
+*         WITH SY-MSGV1 SY-MSGV2 SY-MSGV3 SY-MSGV4.
+ENDIF.
+***************
+ENDLOOP.
+
+*LOOP AT SUBT.
+CALL FUNCTION 'WRITE_FORM'
+ EXPORTING
+   ELEMENT                        = 'TOTAL'
+*   FUNCTION                       = 'SET'
+*   TYPE                           = 'BODY'
+   WINDOW                         = 'TOT'
+* IMPORTING
+*   PENDING_LINES                  =
+ EXCEPTIONS
+   ELEMENT                        = 1
+   FUNCTION                       = 2
+   TYPE                           = 3
+   UNOPENED                       = 4
+   UNSTARTED                      = 5
+   WINDOW                         = 6
+   BAD_PAGEFORMAT_FOR_PRINT       = 7
+   SPOOL_ERROR                    = 8
+   CODEPAGE                       = 9
+   OTHERS                         = 10
+          .
+IF SY-SUBRC <> 0.
+* MESSAGE ID SY-MSGID TYPE SY-MSGTY NUMBER SY-MSGNO
+*         WITH SY-MSGV1 SY-MSGV2 SY-MSGV3 SY-MSGV4.
+ENDIF.
+
+*ENDLOOP.
+
+
+
+
+CALL FUNCTION 'END_FORM'
+* IMPORTING
+*   RESULT                         =
+* EXCEPTIONS
+*   UNOPENED                       = 1
+*   BAD_PAGEFORMAT_FOR_PRINT       = 2
+*   SPOOL_ERROR                    = 3
+*   CODEPAGE                       = 4
+*   OTHERS                         = 5
+          .
+IF SY-SUBRC <> 0.
+* MESSAGE ID SY-MSGID TYPE SY-MSGTY NUMBER SY-MSGNO
+*         WITH SY-MSGV1 SY-MSGV2 SY-MSGV3 SY-MSGV4.
+ENDIF.
+
+
+
+CALL FUNCTION 'CLOSE_FORM'
+* IMPORTING
+*   RESULT                         =
+*   RDI_RESULT                     =
+* TABLES
+*   OTFDATA                        =
+ EXCEPTIONS
+   UNOPENED                       = 1
+   BAD_PAGEFORMAT_FOR_PRINT       = 2
+   SEND_ERROR                     = 3
+   SPOOL_ERROR                    = 4
+   CODEPAGE                       = 5
+   OTHERS                         = 6
+          .
+IF SY-SUBRC <> 0.
+* MESSAGE ID SY-MSGID TYPE SY-MSGTY NUMBER SY-MSGNO
+*         WITH SY-MSGV1 SY-MSGV2 SY-MSGV3 SY-MSGV4.
+ENDIF.

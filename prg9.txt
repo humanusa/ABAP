@@ -1,0 +1,81 @@
+*&---------------------------------------------------------------------*
+*& Report  ZTESTARITRA
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+REPORT  ZTESTARITRA.
+
+*DATA l_data Type I.
+*
+*CONSTANTS Size Type I value 100.
+*DATA: Emp_number     Type I    Value 10,
+*             Emp_name(30)  Type C,
+*             Emp_salary        Type P   Decimals 2.
+*
+*
+*initialization.
+*
+*  clear l_data.
+*
+*start-of-selection.
+*
+*  Emp_name = 'Aritra Biswas'.
+*  Emp_number = 12.
+*  Emp_salary = 10.
+*
+*end-of-selection.
+*
+**  write Emp_name+7(6).
+**  write Emp_number.
+**  write Emp_salary.
+*
+******************************************************************
+**if statement
+**
+**if emp_salary > 0.
+**  write:/ 'this salary is peanuts!!',  emp_salary.
+**endif.
+*
+******************************************************************
+** case statement
+*
+**case emp_salary.
+**  when 10.
+**    write:/ 'guys rich'.
+**  when 5.
+**    write:/ 'not bad'.
+**   when others.
+**    write:/ 'dunno'.
+**endcase.
+*
+******************************************************************
+**while statement
+*
+*while Emp_salary > 0.
+*  write:/ 'going down', Emp_salary.
+*  Emp_salary = Emp_salary - 1.
+*  check Emp_salary > 5.
+*  write :/ 'after check'.
+*endwhile.
+*
+******************************************************************
+
+	Data: Begin of line,
+	            col1 type I,
+	            col2 type I,
+	          End of line.
+	Data itab like line occurs 10.
+	Do 2 times.
+	  line-col1 = sy-index. line-col2 = sy-index ** 2.
+	   Append line to itab.
+	Enddo.
+	Loop at itab into line.
+	  line-col1 = 3 *  sy-tabix. line-col2 = 5 * sy-tabix.
+	  Insert line into itab.
+	Endloop.
+	Loop at itab into line.
+	  write :/ sy-tabix, line-col1, line-col2.
+	Endloop.

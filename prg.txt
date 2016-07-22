@@ -1,0 +1,107 @@
+*&---------------------------------------------------------------------*
+*& Report  ZTEST_REPORT_ABAP8
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+REPORT  ZTESTabap8prg.
+
+TABLES: vbak, mara, vbap.
+
+DATA : BEGIN OF t_vbak OCCURS 0,
+        vbeln LIKE vbak-vbeln,
+        erdat LIKE vbak-erdat,
+        kunnr LIKE vbak-kunnr,
+        vkorg LIKE vbak-vkorg,
+        vtweg LIKE vbak-vtweg,
+        spart LIKE vbak-spart,
+        END OF t_vbak.
+
+DATA : BEGIN OF t_output OCCURS 0,
+        matnr LIKE vbap-matnr,
+        END OF t_output.
+
+DATA:  o_matnr TYPE vbap-matnr.
+
+data : o_vbeln type vbap-vbeln.
+
+* Start-Of-Selection Event
+
+*can  give title text like this also..uncomment the title in initialize also.
+*SELECTION-SCREEN BEGIN OF BLOCK b1 WITH FRAME TITLE title.
+
+*text-001 needs to be defined.
+*SELECTION-SCREEN BEGIN OF BLOCK b1 WITH FRAME TITLE text-001.
+*
+**SELECT-OPTIONS s_vkorg FOR vbak-vkorg OBLIGATORY.
+**SELECT-OPTIONS s_vtweg FOR vbak-vtweg OBLIGATORY.
+**SELECT-OPTIONS s_spart FOR vbak-spart OBLIGATORY.
+*SELECT-OPTIONS s_vkorg FOR vbak-vkorg.
+*SELECT-OPTIONS s_vtweg FOR vbak-vtweg.
+*SELECT-OPTIONS s_spart FOR vbak-spart.
+*SELECT-OPTIONS s_vbeln FOR vbak-vbeln.
+*SELECT-OPTIONS s_matnr FOR mara-matnr.
+*
+**select option with default value.
+*SELECT-OPTIONS s_erdat FOR vbak-erdat default sy-datum.
+*
+**select option similar to parameter list.
+*select-options s-test for vbak-erdat no intervals no-extension.
+*
+**select option with hidden
+*select-options s-test2 for vbak-erdat no intervals no-extension no-display.
+*
+*PARAMETERS s_kunnr TYPE vbak-kunnr.
+*
+*PARAMETERS:
+*p_a1 RADIOBUTTON GROUP g1,
+*p_a2 RADIOBUTTON GROUP g1.
+*
+*PARAMETERS:
+*p_c1 AS CHECKBOX DEFAULT 'X'.
+*SELECTION-SCREEN END OF BLOCK b1.
+*
+*format
+
+initialization.
+*title = 'abap8 title'.
+
+START-OF-SELECTION.
+
+write :/'at start of selection'.
+
+PERFORM select-data.
+
+END-OF-SELECTION.
+
+PERFORM display_data.
+
+FORM select-data .
+
+*Populating The Internal Tables.
+
+ exec sql.
+
+ SELECT vbeln
+ into :o_vbeln
+    FROM vbap
+       WHERE
+           vbeln = 5120;
+
+endexec.
+
+ENDFORM.                    " select-data
+
+FORM display_data .
+
+loop at t_output.
+
+write :/ t_output-matnr.
+
+endloop.
+
+  ULINE.
+
+ENDFORM.                    " display_data

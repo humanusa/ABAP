@@ -1,0 +1,163 @@
+*&---------------------------------------------------------------------*
+*& Report  ZTEST_REPORT_ABAP8
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+REPORT  ZTEST_REPORT_ABAP8.
+
+TABLES: vbak, mara.
+
+DATA : BEGIN OF t_vbak OCCURS 0,
+        vbeln LIKE vbak-vbeln,
+        erdat LIKE vbak-erdat,
+        kunnr LIKE vbak-kunnr,
+        vkorg LIKE vbak-vkorg,
+        vtweg LIKE vbak-vtweg,
+        spart LIKE vbak-spart,
+        END OF t_vbak.
+
+DATA : BEGIN OF t_output OCCURS 0,
+        vbeln LIKE vbak-vbeln,
+        erdat LIKE vbak-erdat,
+        kunnr LIKE vbak-kunnr,
+        kunnr1 LIKE vbpa-kunnr,
+        posnr LIKE vbap-posnr,
+        matnr LIKE vbap-matnr,
+        arktx LIKE vbap-arktx,
+        kwmeng LIKE vbap-kwmeng,
+        END OF t_output.
+
+* Start-Of-Selection Event
+
+*can  give title text like this also..uncomment the title in initialize also.
+*SELECTION-SCREEN BEGIN OF BLOCK b1 WITH FRAME TITLE title.
+
+*text-001 needs to be defined.
+SELECTION-SCREEN BEGIN OF BLOCK b1 WITH FRAME TITLE text-001.
+
+*SELECT-OPTIONS s_vkorg FOR vbak-vkorg OBLIGATORY.
+*SELECT-OPTIONS s_vtweg FOR vbak-vtweg OBLIGATORY.
+*SELECT-OPTIONS s_spart FOR vbak-spart OBLIGATORY.
+SELECT-OPTIONS s_vkorg FOR vbak-vkorg.
+SELECT-OPTIONS s_vtweg FOR vbak-vtweg.
+SELECT-OPTIONS s_spart FOR vbak-spart.
+SELECT-OPTIONS s_vbeln FOR vbak-vbeln.
+SELECT-OPTIONS s_matnr FOR mara-matnr.
+
+*select option with default value.
+SELECT-OPTIONS s_erdat FOR vbak-erdat default sy-datum.
+
+*select option similar to parameter list.
+select-options s-test for vbak-erdat no intervals no-extension.
+
+*select option with hidden
+select-options s-test2 for vbak-erdat no intervals no-extension no-display.
+
+PARAMETERS s_kunnr TYPE vbak-kunnr.
+
+PARAMETERS:
+p_a1 RADIOBUTTON GROUP g1,
+p_a2 RADIOBUTTON GROUP g1.
+
+PARAMETERS:
+p_c1 AS CHECKBOX DEFAULT 'X'.
+SELECTION-SCREEN END OF BLOCK b1.
+
+*format
+
+initialization.
+*title = 'abap8 title'.
+
+AT SELECTION-SCREEN ON s_vkorg.
+
+  SELECT SINGLE *
+   FROM vbak    WHERE vkorg IN s_vkorg.
+  IF sy-subrc NE 0.
+    MESSAGE e010(z001).
+  ENDIF.
+
+message i001(zmsg_class).
+
+at pf01.
+
+write :/'PF key pressed'.
+
+START-OF-SELECTION.
+
+write :/'at start of selection'.
+
+  PERFORM select-data.
+
+END-OF-SELECTION.
+
+IF p_a1 = 'X'.
+  PERFORM display_data.
+ENDIF.
+
+at line-selection.
+write :/'You clicked', sy-listi color 3,
+/'You are on list', sy-lsind.
+
+FORM select-data .
+
+*Populating The Internal Tables.
+
+ SELECT vbeln
+    FROM vbak
+*      INTO CORRESPONDING FIELDS OF TABLE t_vbak
+      INTO TABLE t_vbak
+       WHERE
+           vbeln IN s_vbeln.
+
+write :/ 'sy-subrc:',sy-subrc.
+
+  LOOP AT t_vbak.
+    MOVE: t_vbak-vbeln TO   t_output-vbeln.
+
+write :/'got data'.
+
+    APPEND t_output.
+    CLEAR t_output.
+  ENDLOOP.
+
+ENDFORM.                    " select-data
+
+FORM display_data .
+
+  IF NOT t_output[] IS INITIAL.
+
+    LOOP AT t_output.
+    FORMAT COLOR COL_negative HOTSPOT ON.
+      WRITE: / '|', t_output-vbeln,
+         20 '|',
+         21 t_output-erdat,
+         63 '|',
+         64 t_output-kunnr,
+         70 '|',
+         71 t_output-kunnr1,
+         84 '|',
+         85 t_output-posnr,
+         100 '|',
+         101 t_output-matnr,
+         115 '|',
+         116 t_output-arktx,
+         130 '|',
+         131 t_output-kwmeng,
+         140 '|'.
+
+    FORMAT COLOR OFF.
+    ENDLOOP.
+
+  ELSE.
+    WRITE 'No Data Present In Records'.
+*    MESSAGE i001(zmsg_class).
+     message e001(zmsg_class).
+
+  ENDIF.
+
+  ULINE.
+
+ENDFORM.                    " display_data

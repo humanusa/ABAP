@@ -1,0 +1,305 @@
+
+*----------------------------------------------------------------------*
+*   INCLUDE ZV1311110_TOP                                              *
+*----------------------------------------------------------------------*
+*-----------------------------------------------------------------------
+* Tables
+*-----------------------------------------------------------------------
+
+
+*-----------------------------------------------------------------------
+* Data
+*-----------------------------------------------------------------------
+* Data - Internal Tables                                               *
+
+DATA: BEGIN OF rawfile OCCURS 0,
+        line(1343) TYPE c,
+      END OF rawfile.
+
+DATA : BEGIN OF i_cust_tab OCCURS 0,
+       no(5) TYPE c,
+       kunnr LIKE kna1-kunnr,
+       bukrs LIKE rf02d-bukrs,
+       vkorg LIKE rf02d-vkorg,
+       vtweg LIKE rf02d-vtweg,
+       spart LIKE rf02d-spart,
+       ktokd LIKE rf02d-ktokd,
+       anred LIKE sza1_d0100-title_medi,
+       name1 LIKE addr1_data-name1,
+       name2 LIKE addr1_data-name2,
+       name3 LIKE addr1_data-name3,
+       name4 LIKE addr1_data-name4,
+       sortl LIKE addr1_data-sort1,
+       stras LIKE addr1_data-street,
+       housenum LIKE addr1_data-house_num1,                 "7031
+       pfach LIKE addr1_data-po_box,
+       ort01 LIKE addr1_data-city1,
+       pstlz LIKE addr1_data-post_code1,
+       ort02 LIKE addr1_data-city2,
+       pstl2 LIKE addr1_data-post_code1,
+       pfort LIKE addr1_data-po_box_loc,
+       land1 LIKE addr1_data-country,
+       regio(2) TYPE c,
+       spras LIKE addr1_data-langu,
+       telf1 LIKE sza1_d0100-tel_number,
+       telfx LIKE sza1_d0100-fax_number,
+       knurl LIKE sza1_d0100-smtp_addr,
+       transpzone LIKE addr1_data-transpzone,
+       stcd1 LIKE kna1-stcd1,
+       stcd2 LIKE kna1-stcd2,
+       stceg LIKE kna1-stceg,
+       bahne LIKE kna1-bahne,
+       bahns LIKE kna1-bahns,                              "7384 kcfh423
+       locco LIKE kna1-locco,                              "7384 kcfh423
+*      lzone LIKE kna1-lzone,                              "7384 kcfh423
+       kukla LIKE kna1-kukla,
+       brsch LIKE kna1-brsch,                              "7384 kcfh423
+       banks LIKE knbk-banks,
+       bankl LIKE knbk-bankl,
+       bankn LIKE knbk-bankn,
+       bkont LIKE knbk-bkont,
+       xezer LIKE knbk-xezer,                               "7031
+       civve LIKE kna1-civve,
+       namev LIKE knvk-namev,
+       name1a LIKE knvk-name1,
+*       name2a LIKE knvk-spnam,
+       telf1a LIKE knvk-telf1,
+       abtnr LIKE knvk-abtnr,
+       pafkt LIKE knvk-pafkt,
+       katr1 LIKE kna1-katr1,
+       katr2 LIKE kna1-katr2,                               "7031
+       katr3 LIKE kna1-katr3,                               "7031
+       katr4 LIKE kna1-katr4,                               "7031
+       katr5 LIKE kna1-katr5,                               "7031
+       katr6 LIKE kna1-katr6,
+       katr7 LIKE kna1-katr7,
+       katr8 LIKE kna1-katr8,
+       katr9 LIKE kna1-katr9,
+       katr10 LIKE kna1-katr10,
+       kdkg2 LIKE kna1-kdkg2,                               "7031
+       akont LIKE knb1-akont,
+       zuawa LIKE knb1-zuawa,
+       altkn LIKE knb1-altkn,
+       zterm LIKE knb1-zterm,
+       zwels LIKE knb1-zwels,
+       zahls LIKE knb1-zahls,
+       hbkid LIKE knb1-hbkid,
+       mahna LIKE knb5-mahna,
+       mansp LIKE knb5-mansp,
+       mahns(1) TYPE c,
+       busab LIKE knb1-busab,
+       eikto LIKE knb1-eikto,
+       xausz LIKE knb1-xausz,
+       bzirk LIKE knvv-bzirk,
+       vkgrp LIKE knvv-vkgrp,
+       vkbur LIKE knvv-vkbur,
+       kdgrp LIKE knvv-kdgrp,
+       waers LIKE knvv-waers,
+       rdoff LIKE knvv-rdoff,                               "7031
+       kalks LIKE knvv-kalks,
+       konda LIKE knvv-konda,
+       pltyp LIKE knvv-pltyp,
+       lprio(2) TYPE c,
+       kzazu LIKE knvv-kzazu,
+       vsbed LIKE knvv-vsbed,
+       vwerk LIKE knvv-vwerk,                               "7031
+       autlf LIKE knvv-autlf,                              "7384 kcfh423
+       kztlf LIKE knvv-kztlf,                              "7384 kcfh423
+       antlf TYPE c,
+       mrnkz LIKE knvv-mrnkz,
+       bokre LIKE knvv-bokre,
+       prfre LIKE knvv-prfre,
+       perfk LIKE knvv-perfk,                              "7384 kcfh423
+       perrl LIKE knvv-perrl,                              "7384 kcfh423
+       inco1 LIKE knvv-inco1,
+       inco2 LIKE knvv-inco2,
+       zterma LIKE knvv-zterm,
+       ktgrd LIKE knvv-ktgrd,
+       taxkd LIKE knvi-taxkd,
+*       tatyp LIKE knvi-tatyp,
+       kvgr1 LIKE knvv-kvgr1,
+       kvgr2 LIKE knvv-kvgr2,
+       kvgr3 LIKE knvv-kvgr3,
+       kvgr4 LIKE knvv-kvgr4,
+       kvgr5 LIKE knvv-kvgr5,
+       sperr LIKE kna1-sperr,
+       aufsd LIKE kna1-aufsd,
+       lifsd LIKE kna1-lifsd,
+       faksd LIKE kna1-faksd,
+       loevm LIKE kna1-loevm,
+       loevm1 LIKE knb1-loevm,
+       loevm2 LIKE knvv-loevm,
+       create_flag,
+       change_flag,
+       END OF i_cust_tab.
+
+DATA: BEGIN OF i_excel_dupl OCCURS 0,
+ bankn  LIKE knbk-bankn,
+ bankl  LIKE knbk-bankl,
+ pstlz  LIKE kna1-pstlz,
+ stceg  LIKE kna1-stceg,
+ stcd1  LIKE kna1-stcd1,
+ flag  TYPE c,
+END OF i_excel_dupl.
+
+
+DATA: BEGIN OF i_final OCCURS 0,
+  rowno TYPE i,
+  name(70) TYPE c,
+  kunnr  LIKE kna1-kunnr,
+  bankn  LIKE knbk-bankn,
+  bankl  LIKE knbk-bankl,
+  pstlz  LIKE kna1-pstlz,
+  stceg  LIKE kna1-stceg,
+  stcd1  LIKE kna1-stcd1,
+END OF i_final.
+
+DATA: BEGIN OF i_final1 OCCURS 0,
+        rowno TYPE i,
+        rowno1 TYPE i,
+        name(70) TYPE c,
+        bankn  LIKE knbk-bankn,
+        bankl  LIKE knbk-bankl,
+        pstlz  LIKE kna1-pstlz,
+        stceg  LIKE kna1-stceg,
+        stcd1  LIKE kna1-stcd1,
+        row1(3)  TYPE c,
+        row2(3)  TYPE c,
+        text(50) TYPE c,
+      END OF i_final1.
+
+
+*---------------------------------------------------------------------*
+* Declare Module level Data Structures
+*---------------------------------------------------------------------*
+DATA: BEGIN OF bdc_tab OCCURS 0.
+        INCLUDE STRUCTURE bdcdata.
+DATA: END OF bdc_tab.
+
+*DATA: BEGIN OF bdc_tab1 OCCURS 0.
+*        INCLUDE STRUCTURE bdcdata.
+*DATA: END OF bdc_tab1.
+
+DATA: BEGIN OF mtab_msg OCCURS 0.
+        INCLUDE STRUCTURE bdcmsgcoll.
+DATA: END OF mtab_msg.
+
+DATA: BEGIN OF i_results_tab OCCURS 0.
+DATA: error_type(1) TYPE c.
+DATA: text(100) TYPE c.
+        INCLUDE STRUCTURE i_cust_tab.
+DATA: END OF i_results_tab.
+
+
+*Data  - Global Data
+
+DATA : w_fname TYPE string,
+       w_delimiter TYPE x,
+       w_lines TYPE i.
+DATA:  w_block,
+       w_bdc_created,
+       w_bdc_count TYPE i,
+       w_count TYPE i.
+
+DATA: w_msgid       LIKE sy-msgid,
+      w_msgno       LIKE sy-msgno,
+      w_message     LIKE message,
+*      w_message_line(135),
+      w_msgty       LIKE sy-msgty.
+
+*Constants
+
+CONSTANTS:  ctab(1)    TYPE x VALUE '09'.        " Tab character
+
+*Ranges
+
+RANGES: r_land1 FOR kna1-land1.
+
+*Countries with OPS Source Validation
+r_land1-sign = 'I'.
+r_land1-option = 'EQ'.
+r_land1-low = 'DE'.
+APPEND r_land1.
+
+r_land1-low = 'BE'.
+APPEND r_land1.
+
+r_land1-low = 'NL'.
+APPEND r_land1.
+
+r_land1-low = 'LU'.
+APPEND r_land1.
+
+r_land1-low = 'ES'.
+APPEND r_land1.
+
+
+RANGES: r_country FOR kna1-land1.
+
+*Countries for Customer Upload
+r_country-sign = 'I'.
+r_country-option = 'EQ'.
+
+r_country-low = 'CZ'.
+APPEND r_country.
+
+r_country-low = 'BE'.
+APPEND r_country.
+
+r_country-low = 'DE'.
+APPEND r_country.
+
+r_country-low = 'DK'.
+APPEND r_country.
+
+r_country-low = 'FI'.
+APPEND r_country.
+
+r_country-low = 'FR'.
+APPEND r_country.
+
+r_country-low = 'HU'.
+APPEND r_country.
+
+r_country-low = 'IT'.
+APPEND r_country.
+
+r_country-low = 'LU'.
+APPEND r_country.
+
+r_country-low = 'NL'.
+APPEND r_country.
+
+r_country-low = 'NO'.
+APPEND r_country.
+
+r_country-low = 'PL'.
+APPEND r_country.
+
+r_country-low = 'PT'.
+APPEND r_country.
+
+r_country-low = 'ES'.
+APPEND r_country.
+
+r_country-low = 'GB'.
+APPEND r_country.
+
+
+RANGES: r_wtax_cntry FOR kna1-land1.
+
+*Countries with Withholding tax
+r_wtax_cntry-sign = 'I'.
+r_wtax_cntry-option = 'EQ'.
+
+r_wtax_cntry-low = 'FR'.
+APPEND r_wtax_cntry.
+
+r_wtax_cntry-low = 'ES'.
+APPEND r_wtax_cntry.
+
+r_wtax_cntry-low = 'IT'.
+APPEND r_wtax_cntry.
+
+r_wtax_cntry-low = 'PT'.
+APPEND r_wtax_cntry.

@@ -1,0 +1,30 @@
+* sy-subrc = 0              Record read from file 
+* sy-subrc = 4              End of file reached 
+
+data:  w_dataset1(27) value '/var/textfile.txt', 
+          w_dataset2(27)  value '/var/outfile.txt'. 
+
+data:begin of itab1 occurs 0,         "Text file format 
+           matnr(18),      "MATERIAL NUMBER 
+           bwkrs(4),       "PLANT 
+       end of itab1. 
+
+*Uploading of text file from Application server. 
+open dataset w_dataset1 for input in text mode. 
+       do. 
+              if sy-subrc <> 0. 
+                  exit. 
+              endif. 
+              read dataset w_dataset1 into itab1. 
+             append itab1. 
+             clear itab1. 
+        enddo. 
+close dataset w_dataset1. 
+
+*Downloading of text file to Application server. 
+open dataset w_dataset2 for output in text mode. 
+loop at itable. 
+    transfer itable to w_dataset2. 
+endloop. 
+close dataset w_dataset2. 
+

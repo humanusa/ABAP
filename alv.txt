@@ -1,0 +1,365 @@
+*&--------------------------------------------------------------*
+*& Report  ZTEST_ABAP8_ALV
+*&
+*&--------------------------------------------------------------*
+*&
+*&
+*&--------------------------------------------------------------*
+
+REPORT  ZTEST_ABAP8_ALV.
+
+TABLES: vbak, mara.
+
+TYPE-POOLS: slis.
+
+DATA : BEGIN OF t_vbak OCCURS 0,
+        vbeln LIKE vbak-vbeln,
+        erdat LIKE vbak-erdat,
+*        kunnr LIKE vbak-kunnr,
+*        vkorg LIKE vbak-vkorg,
+*        vtweg LIKE vbak-vtweg,
+*        spart LIKE vbak-spart,
+        END OF t_vbak.
+
+DATA : BEGIN OF t_output OCCURS 0,
+        vbeln LIKE vbak-vbeln,
+        erdat LIKE vbak-erdat,
+*        kunnr LIKE vbak-kunnr,
+*        kunnr1 LIKE vbpa-kunnr,
+*        posnr LIKE vbap-posnr,
+*        matnr LIKE vbap-matnr,
+*        arktx LIKE vbap-arktx,
+*        kwmeng LIKE vbap-kwmeng,
+        END OF t_output.
+
+
+*system declarations
+
+DATA: t_fieldcat TYPE slis_t_fieldcat_alv WITH HEADER LINE.
+
+DATA: t_events TYPE slis_t_event WITH HEADER LINE.
+
+DATA: t_top_of_page TYPE slis_t_listheader WITH HEADER LINE.
+
+data : t-sort TYPE slis_t_listheader WITH HEADER LINE.
+
+DATA: wa_keyinfo TYPE slis_keyinfo_alv.
+
+DATA: wa_variant LIKE disvariant.
+
+* Start-Of-Selection Event
+
+*can  give title text like this also..uncomment the title in
+*initialize also.
+*SELECTION-SCREEN BEGIN OF BLOCK b1 WITH FRAME TITLE title.
+
+*text-001 needs to be defined.
+SELECTION-SCREEN BEGIN OF BLOCK b1 WITH FRAME TITLE text-001.
+
+*SELECT-OPTIONS s_vkorg FOR vbak-vkorg OBLIGATORY.
+*SELECT-OPTIONS s_vtweg FOR vbak-vtweg OBLIGATORY.
+*SELECT-OPTIONS s_spart FOR vbak-spart OBLIGATORY.
+SELECT-OPTIONS s_vkorg FOR vbak-vkorg.
+SELECT-OPTIONS s_vtweg FOR vbak-vtweg.
+SELECT-OPTIONS s_spart FOR vbak-spart.
+SELECT-OPTIONS s_vbeln FOR vbak-vbeln.
+SELECT-OPTIONS s_matnr FOR mara-matnr.
+
+*select option with default value.
+SELECT-OPTIONS s_erdat FOR vbak-erdat default sy-datum.
+
+*select option similar to parameter list.
+select-options s_test for vbak-erdat no intervals no-extension.
+
+*select option with hidden
+select-options s_test2 for vbak-erdat no intervals no-extension
+no-display.
+
+PARAMETERS s_kunnr TYPE vbak-kunnr.
+
+PARAMETERS:
+p_a1 RADIOBUTTON GROUP g1,
+p_a2 RADIOBUTTON GROUP g1,
+p_a3 RADIOBUTTON GROUP g1.
+
+PARAMETERS:
+p_c1 AS CHECKBOX DEFAULT 'X'.
+SELECTION-SCREEN END OF BLOCK b1.
+
+*format
+
+initialization.
+*title = 'abap8 title'.
+
+AT SELECTION-SCREEN ON s_vkorg.
+
+  SELECT SINGLE *
+   FROM vbak    WHERE vkorg IN s_vkorg.
+  IF sy-subrc NE 0.
+    MESSAGE e010(z001).
+  ENDIF.
+
+START-OF-SELECTION.
+
+write :/'at start of selection'.
+
+  PERFORM select-data.
+
+END-OF-SELECTION.
+
+IF p_a1 = 'X'.
+
+    PERFORM create_fieldcatalog.
+
+    PERFORM grid_output.
+
+  ELSEIF p_a2 = 'X'.
+
+    PERFORM create_fieldcatalog.
+
+    PERFORM list_display.
+
+  ELSE.
+
+    PERFORM build_fieldcatalog.
+
+    PERFORM hierarchical_display.
+
+  ENDIF.
+
+FORM select-data .
+
+*Populating The Internal Tables.
+
+ SELECT vbeln erdat
+    FROM vbak
+      INTO TABLE t_vbak
+       WHERE
+           vbeln IN s_vbeln.
+
+ LOOP AT t_vbak.
+    MOVE: t_vbak-vbeln TO   t_output-vbeln.
+
+    APPEND t_output.
+    CLEAR t_output.
+  ENDLOOP.
+
+ENDFORM.                    " select-data
+
+FORM grid_output.
+
+  CALL FUNCTION 'REUSE_ALV_GRID_DISPLAY'
+ EXPORTING
+*   I_INTERFACE_CHECK                 = ' '
+*   I_BYPASSING_BUFFER                = ' '
+*   I_BUFFER_ACTIVE                   = ' '
+     i_callback_program               = 'ZTEST_ABAP8_ALV'
+*   I_CALLBACK_PF_STATUS_SET          = ' '
+*   I_CALLBACK_USER_COMMAND           = ' '
+*   I_CALLBACK_TOP_OF_PAGE            = ' '
+*   I_CALLBACK_HTML_TOP_OF_PAGE       = ' '
+*   I_CALLBACK_HTML_END_OF_LIST       = ' '
+*   I_STRUCTURE_NAME                  =
+*   I_BACKGROUND_ID                   = ' '
+   I_GRID_TITLE                      = 'Deepak'
+*   I_GRID_SETTINGS                   =
+*   IS_LAYOUT                         =
+     it_fieldcat                       = t_fieldcat[]
+*   IT_EXCLUDING                      =
+*   IT_SPECIAL_GROUPS                 =
+*   IT_SORT                           =
+*   IT_FILTER                         =
+*   IS_SEL_HIDE                       =
+*   I_DEFAULT                         = 'X'
+*   i_save                            = 'X'
+*   is_variant                        = wa_variant
+*   IT_EVENTS                         =
+*   IT_EVENT_EXIT                     =
+*   IS_PRINT                          =
+*   IS_REPREP_ID                      =
+*   I_SCREEN_START_COLUMN             = 0
+*   I_SCREEN_START_LINE               = 0
+*   I_SCREEN_END_COLUMN               = 0
+*   I_SCREEN_END_LINE                 = 0
+*   IT_ALV_GRAPHICS                   =
+*   IT_HYPERLINK                      =
+*   IT_ADD_FIELDCAT                   =
+*   IT_EXCEPT_QINFO                   =
+*   I_HTML_HEIGHT_TOP                 =
+*   I_HTML_HEIGHT_END                 =
+* IMPORTING
+*   E_EXIT_CAUSED_BY_CALLER           =
+*   ES_EXIT_CAUSED_BY_USER            =
+    TABLES
+      t_outtab                          = t_output
+   EXCEPTIONS
+     program_error                     = 1
+     OTHERS                            = 2.
+  IF sy-subrc <> 0.
+    MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
+            WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+  ENDIF.
+
+ENDFORM.                    " grid_output
+
+*&--------------------------------------------------------------*
+*&      Form  create_fieldcatalog
+*&--------------------------------------------------------------*
+
+FORM create_fieldcatalog .
+
+  CALL FUNCTION 'REUSE_ALV_FIELDCATALOG_MERGE'
+EXPORTING
+     i_program_name               = 'ZTEST_ABAP8_ALV'
+     i_internal_tabname           = 'T_OUTPUT'
+*   I_STRUCTURE_NAME             =
+*   I_CLIENT_NEVER_DISPLAY       = 'X'
+     i_inclname                   = 'ZTEST_ABAP8_ALV'
+*   I_BYPASSING_BUFFER           =
+*   I_BUFFER_ACTIVE              =
+    CHANGING
+      ct_fieldcat                  = t_fieldcat[]
+   EXCEPTIONS
+     inconsistent_interface       = 1
+     program_error                = 2
+     OTHERS                       = 3
+            .
+  IF sy-subrc <> 0.
+    MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
+            WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+  ENDIF.
+
+ENDFORM.                    " create_fieldcatalog
+
+*&--------------------------------------------------------------------*
+*&      Form  list_display
+*&--------------------------------------------------------------------*
+
+FORM list_display .
+
+  CALL FUNCTION 'REUSE_ALV_LIST_DISPLAY'
+ EXPORTING
+*   I_INTERFACE_CHECK              = ' '
+*   I_BYPASSING_BUFFER             =
+*   I_BUFFER_ACTIVE                = ' '
+     i_callback_program             = 'ZTEST_ABAP8_ALV'
+*   I_CALLBACK_PF_STATUS_SET       = ' '
+*   I_CALLBACK_USER_COMMAND        = ' '
+*   I_STRUCTURE_NAME               =
+*   IS_LAYOUT                      =
+     it_fieldcat                    = t_fieldcat[]
+*   IT_EXCLUDING                   =
+*   IT_SPECIAL_GROUPS              =
+*   IT_SORT                        =
+*   IT_FILTER                      =
+*   IS_SEL_HIDE                    =
+*   I_DEFAULT                      = 'X'
+*   I_SAVE                         = ' '
+*   IS_VARIANT                     =
+*   IT_EVENTS                      =
+*   IT_EVENT_EXIT                  =
+*   IS_PRINT                       =
+*   IS_REPREP_ID                   =
+*   I_SCREEN_START_COLUMN          = 0
+*   I_SCREEN_START_LINE            = 0
+*   I_SCREEN_END_COLUMN            = 0
+*   I_SCREEN_END_LINE              = 0
+* IMPORTING
+*   E_EXIT_CAUSED_BY_CALLER        =
+*   ES_EXIT_CAUSED_BY_USER         =
+    TABLES
+      t_outtab                       = t_output
+   EXCEPTIONS
+     program_error                  = 1
+     OTHERS                         = 2
+            .
+  IF sy-subrc <> 0.
+    MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
+            WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+  ENDIF.
+
+ENDFORM.                    " list_display
+*&--------------------------------------------------------------------*
+*&      Form  hierarchical_display
+*&--------------------------------------------------------------------*
+
+FORM hierarchical_display .
+
+  CALL FUNCTION 'REUSE_ALV_HIERSEQ_LIST_DISPLAY'
+    EXPORTING
+*   I_INTERFACE_CHECK              = ' '
+     i_callback_program             = 'ZTEST_ABAP8_ALV'
+*   I_CALLBACK_PF_STATUS_SET       = ' '
+*   I_CALLBACK_USER_COMMAND        = ' '
+*   IS_LAYOUT                      =
+     it_fieldcat                    = t_fieldcat[]
+*   IT_EXCLUDING                   =
+*   IT_SPECIAL_GROUPS              =
+*   IT_SORT                        =
+*   IT_FILTER                      =
+*   IS_SEL_HIDE                    =
+*   I_SCREEN_START_COLUMN          = 0
+*   I_SCREEN_START_LINE            = 0
+*   I_SCREEN_END_COLUMN            = 0
+*   I_SCREEN_END_LINE              = 0
+   I_DEFAULT                      = 'X'
+   I_SAVE                         = ' '
+*   IS_VARIANT                     =
+*   IT_EVENTS                      =
+*   IT_EVENT_EXIT                  =
+        i_tabname_header               = 'T_vbak'
+        i_tabname_item                 = 'T_vbak'
+*   I_STRUCTURE_NAME_HEADER        =
+*   I_STRUCTURE_NAME_ITEM          =
+      is_keyinfo                     = wa_keyinfo
+*   IS_PRINT                       =
+*   IS_REPREP_ID                   =
+*   I_BYPASSING_BUFFER             =
+*   I_BUFFER_ACTIVE                =
+* IMPORTING
+*   E_EXIT_CAUSED_BY_CALLER        =
+*   ES_EXIT_CAUSED_BY_USER         =
+    TABLES
+        t_outtab_header                = t_vbak
+        t_outtab_item                  = t_vbak
+   EXCEPTIONS
+     program_error                  = 1
+     OTHERS                         = 2
+            .
+  IF sy-subrc <> 0.
+    MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
+            WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+  ENDIF.
+
+ENDFORM.                    " hierarchical_display
+
+
+
+*&---------------------------------------------------------------*
+*&      Form  build_fieldcatalog
+*&---------------------------------------------------------------*
+
+FORM build_fieldcatalog .
+
+  CALL FUNCTION 'REUSE_ALV_FIELDCATALOG_MERGE'
+ EXPORTING
+     i_program_name               = 'ZTEST_ABAP8_ALV'
+     i_internal_tabname           = 'T_OUTPUT'
+*   I_STRUCTURE_NAME             =
+*   I_CLIENT_NEVER_DISPLAY       = 'X'
+     i_inclname                   = 'ZTEST_ABAP8_ALV'
+*   I_BYPASSING_BUFFER           =
+*   I_BUFFER_ACTIVE              =
+    CHANGING
+      ct_fieldcat                  = t_fieldcat[]
+   EXCEPTIONS
+     inconsistent_interface       = 1
+     program_error                = 2
+     OTHERS                       = 3
+            .
+  IF sy-subrc <> 0.
+    MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
+            WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+  ENDIF.
+
+ENDFORM.                    " build_fieldcatalog

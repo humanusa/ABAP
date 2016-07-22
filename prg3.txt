@@ -1,0 +1,99 @@
+*CALL FUNCTION 'OIC_RUN_LSMW_TRANSFORMATION'
+*  EXPORTING
+*    IT_KOMV                            =
+*    IT_CPED_KNUMVTOGUID                =
+* IMPORTING
+*   ES_EXTR_STATS                      =
+*   EV_PROJECT                         =
+*   EV_SUBPROJECT                      =
+*   EV_OBJECT                          =
+* EXCEPTIONS
+*   LSMW_CUSTOMIZING_NOT_FOUND         = 1
+*   NO_SUCH_LSMW_OBJECT                = 2
+*   NO_AUTHORIZATION_TO_RUN_LSMW       = 3
+*   NO_LSMW_FILE_DATA_FOUND            = 4
+*   UNABLE_TO_PROCESS_LSMW_FILES       = 5
+*   ERROR_IN_EXECUTING_LSMW            = 6
+*   MISCELLANEOUS_ERRORS               = 7
+*   OTHERS                             = 8
+          .
+*IF SY-SUBRC <> 0.
+* MESSAGE ID SY-MSGID TYPE SY-MSGTY NUMBER SY-MSGNO
+*         WITH SY-MSGV1 SY-MSGV2 SY-MSGV3 SY-MSGV4.
+*ENDIF.
+*&---------------------------------------------------------------------*
+*& Report  ZTEST22AUG28
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+*REPORT  ZTEST22AUG28.
+*constants l_data1(10) type c value 'shalini'.
+*initialization.
+*   data: l_data2 type i value 10,
+*          l_data3 type i,
+*          l_data4(10) type c.
+*    l_data3 = l_data2.
+*    move l_data1+2(3) to l_data4.
+*    write: l_data1.
+*    write: /.
+*    WRITE: l_data2,/,l_data3,/,l_data4.
+
+
+*REPORT  Z78849_SELECTSALESDOC.
+*DATA : BEGIN OF ty_line occurs 0,
+*            uVBELN like vbap-VBELN,
+*            uPOSNR like vbap-POSNR,
+*            uMATNR like vbap-MATNR,
+*            uWERKS like vbap-WERKS,
+*            uLGORT like vbap-LGORT,
+*            uERDAT like vbap-ERDAT,
+*            END OF ty_line.
+*
+*
+*DATA gt_itvbap1 like ty_line occurs 10 with header line.
+**DATA gt_itvbap2 TYPE STANDARD TABLE OF ty_line.
+*
+*parameters: uVBELN type vbap-VBELN.
+*
+*start-of-selection.
+*
+*  select VBELN POSNR MATNR WERKS LGORT ERDAT from vbap into table gt_itvbap1
+*               where VBELN < '0000005500' and POSNR = 10 and WERKS < 1200 and LGORT <> ''
+*                  and ERDAT between '19970401' and '20020601'.
+*
+*  loop at gt_itvbap1.
+*    write:/ 'Row no ', sy-tabix.
+*    write:/ 'data in internal table','VBELN=',gt_itvbap1-uVBELN, 'POSNR=', gt_itvbap1-uPOSNR, 'MATNR=', gt_itvbap1-uMATNR, 'WERKS=', gt_itvbap1-uWERKS, 'ERDAT=', gt_itvbap1-Uerdat,
+*            'LGORT=',gt_itvbap1-Ulgort.
+*  endloop.
+**WERKS <= 4000 and VBELN > 2000 and ERDAT is between '1997-04-01' and '2002-06-01'and LGORT "is NOT NULL".
+**gt_itvbap1-uLGORT,
+
+REPORT  Z78849_SELECTSALESDOC.
+
+DATA : BEGIN OF ty_line occurs 0,
+            uEBELN like Z64577_TABLE-EBELN,
+            uBUKRS like Z64577_TABLE-BUKRS,
+            uLIFNR like Z64577_TABLE-LIFNR,
+            uBEDAT like Z64577_TABLE-BEDAT,
+            uWKURS like Z64577_TABLE-WKURS,
+            uWAERS like Z64577_TABLE-WAERS,
+            END OF ty_line.
+
+
+DATA gt_itvbap1 like ty_line occurs 10 with header line.
+
+start-of-selection.
+
+select EBELN BUKRS LIFNR BEDAT WKURS WAERS from Z64577_TABLE
+     INTO TABLE gt_itvbap1
+      where ebeln = '1000000001'.
+
+  loop at gt_itvbap1.
+    write:/ 'data in internal table','EBELN=',gt_itvbap1-uEBELN, 'BUKRS=', gt_itvbap1-uBUKRS, 'LIFNR=',
+             gt_itvbap1-uLIFNR, 'BEDAT=', gt_itvbap1-uBEDAT, 'WKURS=', gt_itvbap1-UWKURS,
+            'WAERS=',gt_itvbap1-UWAERS.
+  endloop.

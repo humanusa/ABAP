@@ -1,0 +1,27 @@
+*&---------------------------------------------------------------------*
+*& Report  ZTEST22AUG28_SELSCREEN
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+REPORT  ZTEST22AUG28_SELSCREEN.
+tables: ekko,ekpo.
+
+selection-screen begin of block b1 with frame title text-t01.
+
+  SELECT-OPTIONS: s_dummy for ekpo-aedat,
+                             s_bsart FOR ekko-bsart NO-EXTENSION NO INTERVALS,
+                                  s_lifnr FOR ekko-lifnr.
+  PARAMETERS         p_ddate TYPE ekko-aedat obligatory.
+
+
+selection-screen end of block b1.
+
+ start-of-selection.
+*   WRITE: 'DGDHGDHDD', S_BSART.
+   write: 'Value of date is', p_ddate.
+   write: 'text element value is ', text-t01.
+*write: 'Current time is', sy-uzeit.
+*write: ' Current date is ', sy-datum.

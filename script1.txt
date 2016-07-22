@@ -1,0 +1,346 @@
+*&---------------------------------------------------------------------*
+*& Report  ZABAP8SCRIPTASG1
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+REPORT  ZABAP8SCRIPTASG1.
+
+************************************************************************
+TABLES: vbak, vbrp, vbep, vbap, adrc, kna1, vbrk.
+************************************************************************
+
+************************************************************************
+*Table declarations
+************************************************************************
+DATA: BEGIN OF t_main1 OCCURS 0,
+      vbeln TYPE VBRK-VBELN,
+      KUNRG LIKE VBRK-KUNRG,
+      FKDAT LIKE VBRK-FKDAT,
+      XBLNR LIKE VBRK-XBLNR,
+      WAERK LIKE VBRK-WAERK,
+     END OF t_main1.
+
+
+DATA: BEGIN OF t_main2 OCCURS 0,
+      vbeln TYPE VBRP-VBELN,
+      MATNR LIKE VBRP-MATNR,
+      ARKTX LIKE VBRP-ARKTX,
+      FKIMG LIKE VBRP-FKIMG,
+      VRKME LIKE VBRP-VRKME,
+      NETWR LIKE VBRP-NETWR,
+      END OF t_main2.
+
+
+DATA: BEGIN OF t_addr2 OCCURS 0,
+      addrnumber TYPE adrc-addrnumber,
+      name1 TYPE adrc-name1,
+      street TYPE adrc-street,
+      city1 TYPE adrc-city1,
+      post_code1 TYPE adrc-post_code1,
+      country TYPE adrc-country,
+      tel_number TYPE adrc-tel_number,
+      END OF t_addr2.
+
+
+DATA: BEGIN OF t_addr3 OCCURS 0,
+      kunnr TYPE kna1-kunnr,
+      adrnr LIKE kna1-adrnr,
+      END OF t_addr3.
+
+*data : vaddr3 type table of t_addr3.
+
+PARAMETERS: p_vbeln TYPE vbak-vbeln.
+
+*select-options: P_vbeln for vbRk-vbeln obligatory.
+
+SELECT vbeln KUNRG FKDAT XBLNR waerk
+     FROM vbrk
+     INTO TABLE t_main1
+     WHERE vbeln = p_vbeln.
+
+IF NOT t_main1[] IS INITIAL.
+
+  SELECT vbeln
+         MATNR
+         ARKTX
+         FKIMG
+         VRKME
+         NETWR
+         INTO TABLE t_main2
+         FROM vbrp
+         FOR ALL ENTRIES IN t_main1
+         WHERE vbeln = t_main1-vbeln.
+
+  SELECT  kunnr adrnr
+          FROM kna1
+          INTO TABLE t_addr3
+          FOR ALL ENTRIES IN t_main1
+          WHERE kunnr = t_main1-KUNRG.
+
+  SELECT addrnumber name1
+         street
+         city1
+         post_code1
+         country
+         tel_number
+         INTO TABLE t_addr2
+         FROM adrc
+         FOR ALL ENTRIES IN t_addr3
+         WHERE addrnumber = t_addr3-adrnr.
+ENDIF.
+
+*select a~vbeln
+*into t_main1-vbeln
+*from (vbrp as a inner join vbrk as b  on a~vbeln = b~vbeln)
+*where a~vbeln = 90005178.
+*
+*loop at t_main1.
+*write :/'Address' , t_main1.
+*endloop.
+*
+DATA : lvs_itcpp LIKE  itcpp.
+CALL FUNCTION 'OPEN_FORM'
+ EXPORTING
+*   APPLICATION                       = 'TX'
+*   ARCHIVE_INDEX                     =
+*   ARCHIVE_PARAMS                    =
+*   DEVICE                            = 'PRINTER'
+*   DIALOG                            = 'X'
+    form                              = 'ZABAP8SCRIPTASG1'
+*   LANGUAGE                          = SY-LANGU
+*   OPTIONS                           =
+*   MAIL_SENDER                       =
+*   MAIL_RECIPIENT                    =
+*   MAIL_APPL_OBJECT                  =
+*   RAW_DATA_INTERFACE                = '*'
+*   SPONUMIV                          =
+ IMPORTING
+*   LANGUAGE                          =
+*   NEW_ARCHIVE_PARAMS                =
+   RESULT                            = lvs_itcpp
+ EXCEPTIONS
+   canceled                          = 1
+   device                            = 2
+   form                              = 3
+   OPTIONS                           = 4
+   unclosed                          = 5
+   mail_options                      = 6
+   archive_error                     = 7
+   invalid_fax_number                = 8
+   more_params_needed_in_batch       = 9
+   spool_error                       = 10
+   codepage                          = 11
+   OTHERS                            = 12
+          .
+IF sy-subrc <> 0.
+  MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
+          WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+ENDIF.
+
+loop at t_main2.
+
+CALL FUNCTION 'WRITE_FORM'
+ EXPORTING
+*   element                        = 'HEADER_TEXT'
+*   FUNCTION                       = 'SET'
+*   TYPE                           = 'BODY'
+    window                         = 'MAIN'
+* IMPORTING
+*   PENDING_LINES                  =
+* EXCEPTIONS
+*   ELEMENT                        = 1
+*   FUNCTION                       = 2
+*   TYPE                           = 3
+*   UNOPENED                       = 4
+*   UNSTARTED                      = 5
+*   WINDOW                         = 6
+*   BAD_PAGEFORMAT_FOR_PRINT       = 7
+*   SPOOL_ERROR                    = 8
+*   CODEPAGE                       = 9
+*   OTHERS                         = 10
+          .
+IF sy-subrc <> 0.
+  MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
+          WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+ENDIF.
+
+endloop.
+
+*Form get_addr
+
+*loop at t_addr2.
+
+CALL FUNCTION 'WRITE_FORM'
+ EXPORTING
+*   element                        = 'HEADER_TEXT'
+*   FUNCTION                       = 'SET'
+*   TYPE                           = 'BODY'
+    window                         = 'ADDRESS'
+* IMPORTING
+*   PENDING_LINES                  =
+* EXCEPTIONS
+*   ELEMENT                        = 1
+*   FUNCTION                       = 2
+*   TYPE                           = 3
+*   UNOPENED                       = 4
+*   UNSTARTED                      = 5
+*   WINDOW                         = 6
+*   BAD_PAGEFORMAT_FOR_PRINT       = 7
+*   SPOOL_ERROR                    = 8
+*   CODEPAGE                       = 9
+*   OTHERS                         = 10
+          .
+IF sy-subrc <> 0.
+  MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
+          WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+ENDIF.
+
+*endloop.
+
+
+CALL FUNCTION 'WRITE_FORM'
+ EXPORTING
+*   element                        = 'HEADER_TEXT'
+*   FUNCTION                       = 'SET'
+*   TYPE                           = 'BODY'
+    window                         = 'DATE'
+* IMPORTING
+*   PENDING_LINES                  =
+* EXCEPTIONS
+*   ELEMENT                        = 1
+*   FUNCTION                       = 2
+*   TYPE                           = 3
+*   UNOPENED                       = 4
+*   UNSTARTED                      = 5
+*   WINDOW                         = 6
+*   BAD_PAGEFORMAT_FOR_PRINT       = 7
+*   SPOOL_ERROR                    = 8
+*   CODEPAGE                       = 9
+*   OTHERS                         = 10
+          .
+IF sy-subrc <> 0.
+  MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
+          WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+ENDIF.
+
+CALL FUNCTION 'WRITE_FORM'
+ EXPORTING
+*   element                        = 'HEADER_TEXT'
+*   FUNCTION                       = 'SET'
+*   TYPE                           = 'BODY'
+    window                         = 'INFY'
+* IMPORTING
+*   PENDING_LINES                  =
+* EXCEPTIONS
+*   ELEMENT                        = 1
+*   FUNCTION                       = 2
+*   TYPE                           = 3
+*   UNOPENED                       = 4
+*   UNSTARTED                      = 5
+*   WINDOW                         = 6
+*   BAD_PAGEFORMAT_FOR_PRINT       = 7
+*   SPOOL_ERROR                    = 8
+*   CODEPAGE                       = 9
+*   OTHERS                         = 10
+          .
+IF sy-subrc <> 0.
+  MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
+          WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+ENDIF.
+
+CALL FUNCTION 'WRITE_FORM'
+ EXPORTING
+*   element                        = 'HEADER_TEXT'
+*   FUNCTION                       = 'SET'
+*   TYPE                           = 'BODY'
+    window                         = 'INV'
+* IMPORTING
+*   PENDING_LINES                  =
+* EXCEPTIONS
+*   ELEMENT                        = 1
+*   FUNCTION                       = 2
+*   TYPE                           = 3
+*   UNOPENED                       = 4
+*   UNSTARTED                      = 5
+*   WINDOW                         = 6
+*   BAD_PAGEFORMAT_FOR_PRINT       = 7
+*   SPOOL_ERROR                    = 8
+*   CODEPAGE                       = 9
+*   OTHERS                         = 10
+          .
+IF sy-subrc <> 0.
+  MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
+          WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+ENDIF.
+
+*PERFORM PROCESS_ITEM.
+
+DATA: i_itcpp LIKE itcpp.
+
+* Define Internal table for OTF-Data
+DATA: otf_data LIKE itcoo OCCURS 0 WITH HEADER LINE.
+
+
+CALL FUNCTION 'CLOSE_FORM'
+ IMPORTING
+   RESULT                         = i_itcpp
+*   RDI_RESULT                     =
+ TABLES
+   otfdata                        = otf_data
+ EXCEPTIONS
+   unopened                       = 1
+   bad_pageformat_for_print       = 2
+   send_error                     = 3
+   spool_error                    = 4
+   codepage                       = 5
+   OTHERS                         = 6
+          .
+IF sy-subrc <> 0.
+* MESSAGE ID SY-MSGID TYPE SY-MSGTY NUMBER SY-MSGNO
+*         WITH SY-MSGV1 SY-MSGV2 SY-MSGV3 SY-MSGV4.
+ENDIF.
+*
+*
+**&---------------------------------------------------------------------*
+**&      Form  PROCESS_ITEM
+**&---------------------------------------------------------------------*
+**       text
+**----------------------------------------------------------------------*
+**  -->  p1        text
+**  <--  p2        text
+**----------------------------------------------------------------------*
+*form PROCESS_ITEM .
+*
+*Loop AT t_main2.
+*CALL FUNCTION 'WRITE_FORM'
+* EXPORTING
+*    element                        = 'ITEMDETAILS'
+**   FUNCTION                       = 'SET'
+**   TYPE                           = 'BODY'
+*    window                         = 'MAIN'
+** IMPORTING
+**   PENDING_LINES                  =
+** EXCEPTIONS
+**   ELEMENT                        = 1
+**   FUNCTION                       = 2
+**   TYPE                           = 3
+**   UNOPENED                       = 4
+**   UNSTARTED                      = 5
+**   WINDOW                         = 6
+**   BAD_PAGEFORMAT_FOR_PRINT       = 7
+**   SPOOL_ERROR                    = 8
+**   CODEPAGE                       = 9
+**   OTHERS                         = 10
+*          .
+*IF sy-subrc <> 0.
+*  MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
+*          WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+*ENDIF.
+*ENdloop.
+*
+*
+*
+*endform.                    " PROCESS_ITEM

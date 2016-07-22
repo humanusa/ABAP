@@ -1,0 +1,2497 @@
+
+*----------------------------------------------------------------------*
+*   INCLUDE ZV1311110_F01                                              *
+*----------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*&      Form  initialization
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM initialization.
+
+ENDFORM.                    " initialization
+*&---------------------------------------------------------------------*
+*&      Form  upload_file
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM upload_file.
+
+  IF p_local EQ 'X'.
+    CALL FUNCTION 'WS_UPLOAD'
+         EXPORTING
+              filename                = p_phpath
+              filetype                = 'ASC'
+         TABLES
+              data_tab                = rawfile
+         EXCEPTIONS
+              conversion_error        = 1
+              invalid_table_width     = 2
+              invalid_type            = 3
+              no_batch                = 4
+              unknown_error           = 5
+              gui_refuse_filetransfer = 6
+              OTHERS                  = 7.
+
+    IF sy-subrc NE 0.
+      MESSAGE e141(25) WITH p_phpath.
+    ENDIF.
+
+  ELSE.
+
+    CALL FUNCTION 'FILE_GET_NAME'
+         EXPORTING
+              logical_filename = p_lgpath
+         IMPORTING
+              file_name        = w_fname
+         EXCEPTIONS
+              file_not_found   = 1
+              OTHERS           = 2.
+    IF sy-subrc NE 0.
+      MESSAGE e141(25) WITH p_lgpath.
+    ENDIF.
+
+    OPEN DATASET w_fname FOR INPUT IN TEXT MODE.
+    DO.
+      READ DATASET w_fname INTO rawfile.
+      IF sy-subrc <> 0.
+        EXIT.
+      ENDIF.
+      APPEND rawfile.
+    ENDDO.
+    CLOSE DATASET w_fname.
+  ENDIF.
+
+ENDFORM.                    " upload_file
+*&---------------------------------------------------------------------*
+*&      Form  split_file
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM split_file.
+
+*  DATA: lw_blank TYPE c.
+
+* Determine Delimiter
+  CASE 'X'.
+    WHEN p_comma. WRITE ',' TO w_delimiter.
+    WHEN p_semi.  WRITE ';' TO w_delimiter.
+    WHEN p_tab.   w_delimiter = ctab.
+    WHEN p_other. WRITE p_delim TO w_delimiter.
+  ENDCASE.
+
+* Make sure file contains data
+  DESCRIBE TABLE rawfile LINES w_lines.
+  CHECK w_lines GT 1.
+
+* Delete the header record.
+  DELETE rawfile INDEX 1.
+
+
+  LOOP AT rawfile.
+
+* Remove Quotes
+    TRANSLATE rawfile USING ' ¬'.        " Conserve Spaces
+    TRANSLATE rawfile USING '" '.        " Remove double quotes
+    CONDENSE rawfile NO-GAPS.            " Clear empty spaces
+    TRANSLATE rawfile USING '¬ '.        " Put any spaces back in
+
+    SPLIT rawfile AT w_delimiter INTO
+
+       i_cust_tab-no
+       i_cust_tab-kunnr
+       i_cust_tab-bukrs
+       i_cust_tab-vkorg
+       i_cust_tab-vtweg
+       i_cust_tab-spart
+       i_cust_tab-ktokd
+       i_cust_tab-anred
+       i_cust_tab-name1
+       i_cust_tab-name2
+       i_cust_tab-name3
+       i_cust_tab-name4
+       i_cust_tab-sortl
+       i_cust_tab-stras
+       i_cust_tab-housenum                                 "7031 kcfh423
+       i_cust_tab-pfach
+       i_cust_tab-ort01
+       i_cust_tab-pstlz
+       i_cust_tab-ort02
+       i_cust_tab-pstl2
+       i_cust_tab-pfort
+       i_cust_tab-land1
+       i_cust_tab-regio
+       i_cust_tab-spras
+       i_cust_tab-telf1
+       i_cust_tab-telfx
+       i_cust_tab-knurl
+       i_cust_tab-transpzone
+       i_cust_tab-stcd1
+       i_cust_tab-stcd2
+       i_cust_tab-stceg
+       i_cust_tab-bahne
+       i_cust_tab-bahns                                    "7384 kcfh423
+*      i_cust_tab-lzone                                    "7384 kcfh423
+       i_cust_tab-locco                                    "7384 kcfh423
+       i_cust_tab-kukla
+       i_cust_tab-brsch                                    "7384 kcfh423
+       i_cust_tab-banks
+       i_cust_tab-bankl
+       i_cust_tab-bankn
+       i_cust_tab-bkont
+       i_cust_tab-xezer                                    "7031 kcfh423
+       i_cust_tab-civve
+       i_cust_tab-namev
+       i_cust_tab-name1a
+*       i_cust_tab-name2a
+       i_cust_tab-telf1a
+       i_cust_tab-abtnr
+       i_cust_tab-pafkt
+       i_cust_tab-katr1
+       i_cust_tab-katr2                                   "7031 kcfh423
+       i_cust_tab-katr3                                   "7031 kcfh423
+       i_cust_tab-katr4                                   "7031 kcfh423
+       i_cust_tab-katr5                                   "7031 kcfh423
+       i_cust_tab-katr6
+       i_cust_tab-katr7
+       i_cust_tab-katr8
+       i_cust_tab-katr9
+       i_cust_tab-katr10
+       i_cust_tab-kdkg2                                   "7031 kcfh423
+       i_cust_tab-akont
+       i_cust_tab-zuawa
+       i_cust_tab-altkn
+       i_cust_tab-zterm
+       i_cust_tab-zwels
+       i_cust_tab-zahls
+       i_cust_tab-hbkid
+       i_cust_tab-mahna
+       i_cust_tab-mansp
+       i_cust_tab-mahns
+       i_cust_tab-busab
+       i_cust_tab-eikto
+       i_cust_tab-xausz
+       i_cust_tab-bzirk
+       i_cust_tab-vkgrp
+       i_cust_tab-vkbur
+       i_cust_tab-kdgrp
+       i_cust_tab-waers
+       i_cust_tab-rdoff                                   "7031 kcfh423
+       i_cust_tab-kalks
+       i_cust_tab-konda
+       i_cust_tab-pltyp
+       i_cust_tab-lprio
+       i_cust_tab-kzazu
+       i_cust_tab-vsbed
+       i_cust_tab-vwerk                                   "7031 kcfh423
+       i_cust_tab-autlf                                   "7384 kcfh423
+       i_cust_tab-kztlf                                   "7384 kcfh423
+       i_cust_tab-antlf
+       i_cust_tab-mrnkz
+       i_cust_tab-bokre
+       i_cust_tab-prfre
+       i_cust_tab-perfk                                   "7384 kcfh423
+       i_cust_tab-perrl                                   "7384 kcfh423
+       i_cust_tab-inco1
+       i_cust_tab-inco2
+       i_cust_tab-zterma
+       i_cust_tab-ktgrd
+       i_cust_tab-taxkd
+*       i_cust_tab-tatyp
+       i_cust_tab-kvgr1
+       i_cust_tab-kvgr2
+       i_cust_tab-kvgr3
+       i_cust_tab-kvgr4
+       i_cust_tab-kvgr5
+       i_cust_tab-sperr
+       i_cust_tab-aufsd
+       i_cust_tab-lifsd
+       i_cust_tab-faksd
+       i_cust_tab-loevm
+       i_cust_tab-loevm1
+       i_cust_tab-loevm2.
+
+    CALL FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
+         EXPORTING
+              input  = i_cust_tab-kunnr
+         IMPORTING
+              output = i_cust_tab-kunnr.
+
+    CALL FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
+         EXPORTING
+              input  = i_cust_tab-vtweg
+         IMPORTING
+              output = i_cust_tab-vtweg.
+
+    CALL FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
+         EXPORTING
+              input  = i_cust_tab-spart
+         IMPORTING
+              output = i_cust_tab-spart.
+
+    CALL FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
+         EXPORTING
+              input  = i_cust_tab-ktokd
+         IMPORTING
+              output = i_cust_tab-ktokd.
+
+    CALL FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
+         EXPORTING
+              input  = i_cust_tab-regio
+         IMPORTING
+              output = i_cust_tab-regio.
+
+
+    CALL FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
+         EXPORTING
+              input  = i_cust_tab-bkont
+         IMPORTING
+              output = i_cust_tab-bkont.
+
+    CALL FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
+         EXPORTING
+              input  = i_cust_tab-katr1
+         IMPORTING
+              output = i_cust_tab-katr1.
+
+    CALL FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
+         EXPORTING
+              input  = i_cust_tab-katr2
+         IMPORTING
+              output = i_cust_tab-katr2.
+
+
+    CALL FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
+         EXPORTING
+              input  = i_cust_tab-katr3
+         IMPORTING
+              output = i_cust_tab-katr3.
+
+    CALL FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
+         EXPORTING
+              input  = i_cust_tab-katr4
+         IMPORTING
+              output = i_cust_tab-katr4.
+
+    CALL FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
+         EXPORTING
+              input  = i_cust_tab-katr5
+         IMPORTING
+              output = i_cust_tab-katr5.
+
+    CALL FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
+         EXPORTING
+              input  = i_cust_tab-katr6
+         IMPORTING
+              output = i_cust_tab-katr6.
+
+    CALL FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
+         EXPORTING
+              input  = i_cust_tab-katr7
+         IMPORTING
+              output = i_cust_tab-katr7.
+
+    CALL FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
+         EXPORTING
+              input  = i_cust_tab-katr8
+         IMPORTING
+              output = i_cust_tab-katr8.
+
+    CALL FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
+         EXPORTING
+              input  = i_cust_tab-katr9
+         IMPORTING
+              output = i_cust_tab-katr9.
+
+    CALL FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
+         EXPORTING
+              input  = i_cust_tab-katr10
+         IMPORTING
+              output = i_cust_tab-katr10.
+
+    CALL FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
+         EXPORTING
+              input  = i_cust_tab-kdkg2
+         IMPORTING
+              output = i_cust_tab-kdkg2.
+
+
+    CALL FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
+         EXPORTING
+              input  = i_cust_tab-kukla
+         IMPORTING
+              output = i_cust_tab-kukla.
+
+
+    CALL FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
+         EXPORTING
+              input  = i_cust_tab-zuawa
+         IMPORTING
+              output = i_cust_tab-zuawa.
+
+
+    CALL FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
+         EXPORTING
+              input  = i_cust_tab-kdgrp
+         IMPORTING
+              output = i_cust_tab-kdgrp.
+
+    CALL FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
+         EXPORTING
+              input  = i_cust_tab-konda
+         IMPORTING
+              output = i_cust_tab-konda.
+
+    CALL FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
+         EXPORTING
+              input  = i_cust_tab-pltyp
+         IMPORTING
+              output = i_cust_tab-pltyp.
+
+    CALL FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
+         EXPORTING
+              input  = i_cust_tab-lprio
+         IMPORTING
+              output = i_cust_tab-lprio.
+
+    CALL FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
+         EXPORTING
+              input  = i_cust_tab-vsbed
+         IMPORTING
+              output = i_cust_tab-vsbed.
+
+    CALL FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
+         EXPORTING
+              input  = i_cust_tab-busab
+         IMPORTING
+              output = i_cust_tab-busab.
+
+
+    CALL FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
+         EXPORTING
+              input  = i_cust_tab-ktgrd
+         IMPORTING
+              output = i_cust_tab-ktgrd.
+
+    CALL FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
+         EXPORTING
+              input  = i_cust_tab-abtnr
+         IMPORTING
+              output = i_cust_tab-abtnr.
+
+
+    CALL FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
+         EXPORTING
+              input  = i_cust_tab-pafkt
+         IMPORTING
+              output = i_cust_tab-pafkt.
+
+
+    CALL FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
+         EXPORTING
+              input  = i_cust_tab-aufsd
+         IMPORTING
+              output = i_cust_tab-aufsd.
+
+    CALL FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
+         EXPORTING
+              input  = i_cust_tab-lifsd
+         IMPORTING
+              output = i_cust_tab-lifsd.
+
+    CALL FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
+         EXPORTING
+              input  = i_cust_tab-faksd
+         IMPORTING
+              output = i_cust_tab-faksd.
+
+* >>> Begin of modification KCFH423 CCL7384 EU1K926967
+    CALL FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
+         EXPORTING
+              input  = i_cust_tab-perfk
+         IMPORTING
+              output = i_cust_tab-perfk.
+
+    CALL FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
+         EXPORTING
+              input  = i_cust_tab-perrl
+         IMPORTING
+              output = i_cust_tab-perrl.
+* <<< End of modification KCFH423 CCL7384 EU1K926967
+
+    IF NOT p_create IS INITIAL.
+      i_cust_tab-create_flag = 'X'.
+    ELSE.
+      i_cust_tab-change_flag = 'X'.
+    ENDIF.
+
+    APPEND i_cust_tab.
+  ENDLOOP.
+
+ENDFORM.                    " split_file
+*&---------------------------------------------------------------------*
+*&      Form  generate_bdc
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM generate_bdc.
+
+  REFRESH bdc_tab.
+*  REFRESH bdc_tab1.
+  w_bdc_created = 'N'.
+  w_bdc_count = 0.
+  w_count = 0.
+
+  LOOP AT i_cust_tab.
+
+    PERFORM generate_table_input.
+
+  ENDLOOP.
+ENDFORM.                    " generate_bdc
+*&---------------------------------------------------------------------*
+*&      Form  generate_table_input
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM generate_table_input.
+
+*BDC data generate
+  PERFORM generate_bdc_data.
+*  BDC Session
+  PERFORM create_bdc_session.
+
+ENDFORM.                    " generate_table_input
+*&---------------------------------------------------------------------*
+*&      Form  generate_bdc_data
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM generate_bdc_data.
+* Clear previous BDC_TAB entries from table body
+  REFRESH bdc_tab.
+*  REFRESH bdc_tab1.
+* OK - Do we Add, Change or Delete?
+  CASE 'X'.
+    WHEN i_cust_tab-create_flag. PERFORM generate_bdc_create.
+    WHEN i_cust_tab-change_flag. PERFORM generate_bdc_change.
+  ENDCASE.
+  IF w_block = 'X'.
+    PERFORM generate_bdc_block.
+  ENDIF.
+ENDFORM.                    " generate_bdc_data
+*&---------------------------------------------------------------------*
+*&      Form  create_bdc_session
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM create_bdc_session.
+
+  CONSTANTS:
+    lc_error LIKE mtab_msg-msgtyp VALUE 'E'.
+
+* variable
+  DATA: lw_lines TYPE i,
+        lw_sesname(12) TYPE c.
+
+  DATA: l_tcode        LIKE tstc-tcode.
+
+  CASE 'X'.
+    WHEN i_cust_tab-create_flag. l_tcode = 'XD01'.
+    WHEN i_cust_tab-change_flag. l_tcode = 'XD02'.
+  ENDCASE.
+
+
+* Update using CALL TRANSACTION. If this fails then hold
+* data in a BDC Session
+  REFRESH mtab_msg.
+  CALL TRANSACTION l_tcode USING bdc_tab
+                 MODE   'N'
+                 UPDATE 'S'
+                 MESSAGES INTO mtab_msg.
+
+* NOT OK - Hold error message in results table
+  IF sy-subrc NE 0.
+    CLEAR i_results_tab.
+    LOOP AT mtab_msg WHERE msgtyp EQ lc_error.
+
+      w_msgid = mtab_msg-msgid.
+      w_msgno = mtab_msg-msgnr.
+      w_msgty = mtab_msg-msgtyp.
+
+      CLEAR w_message.
+      CALL FUNCTION 'MESSAGE_TEXT_BUILD'
+           EXPORTING
+                msgid               = w_msgid
+                msgnr               = w_msgno
+                msgv1               = mtab_msg-msgv1
+                msgv2               = mtab_msg-msgv2
+                msgv3               = mtab_msg-msgv3
+                msgv4               = mtab_msg-msgv4
+           IMPORTING
+                message_text_output = w_message-msgtx.
+
+*      CONCATENATE w_msgid
+*                  w_msgno
+*                w_message-msgtx INTO w_message-msgtx SEPARATED BY space
+
+      MOVE w_message-msgtx TO i_results_tab-text.
+      MOVE '2' TO i_results_tab-error_type.
+      MOVE-CORRESPONDING i_cust_tab TO i_results_tab.
+      APPEND i_results_tab.
+      EXIT.
+    ENDLOOP.
+    IF sy-subrc NE 0.
+* if no error message appears, get the last message of the message table
+* To do that, get the number of lines
+      CLEAR lw_lines.
+      DESCRIBE TABLE mtab_msg LINES lw_lines.
+
+      CLEAR mtab_msg.
+      READ TABLE mtab_msg INDEX lw_lines.
+      IF sy-subrc EQ 0.
+        w_msgid = mtab_msg-msgid.
+        w_msgno = mtab_msg-msgnr.
+
+* get the message text
+        CLEAR w_message.
+        CALL FUNCTION 'MESSAGE_TEXT_BUILD'
+             EXPORTING
+                  msgid               = w_msgid
+                  msgnr               = w_msgno
+                  msgv1               = mtab_msg-msgv1
+                  msgv2               = mtab_msg-msgv2
+                  msgv3               = mtab_msg-msgv3
+                  msgv4               = mtab_msg-msgv4
+             IMPORTING
+                  message_text_output = w_message-msgtx.
+
+**   save the message into the error table
+*        CONCATENATE w_msgid
+*                    w_msgno
+*                   w_message-msgtx
+*                   INTO w_message-msgtx SEPARATED BY space.
+        MOVE w_message-msgtx TO i_results_tab-text.
+        MOVE '2' TO i_results_tab-error_type.
+        MOVE-CORRESPONDING i_cust_tab TO i_results_tab.
+        APPEND i_results_tab.
+      ENDIF.
+    ENDIF.
+
+
+* If this is the first time through and the BDC session open the group
+    IF w_bdc_created = 'N'.
+      IF NOT p_create IS INITIAL.
+        lw_sesname = p_bdccr.
+      ELSE.
+        lw_sesname = p_bdcch.
+      ENDIF.
+
+      CALL FUNCTION 'BDC_OPEN_GROUP'
+           EXPORTING
+                client = sy-mandt
+                group  = lw_sesname
+                keep   = 'X'
+                user   = sy-uname.
+      w_bdc_created = 'Y'.
+    ENDIF.
+
+* Call function to Insert the Transaction and BDC_TAB
+    CALL FUNCTION 'BDC_INSERT'
+         EXPORTING
+              tcode     = l_tcode
+         TABLES
+              dynprotab = bdc_tab.
+
+  ELSE.
+* OK - Hold success message in results table
+    LOOP AT mtab_msg WHERE msgtyp EQ 'S'.
+
+      w_msgid = mtab_msg-msgid.
+      w_msgno = mtab_msg-msgnr.
+      w_msgty = mtab_msg-msgtyp.
+      CLEAR w_message.
+      CALL FUNCTION 'MESSAGE_TEXT_BUILD'
+           EXPORTING
+                msgid               = w_msgid
+                msgnr               = w_msgno
+                msgv1               = mtab_msg-msgv1
+                msgv2               = mtab_msg-msgv2
+                msgv3               = mtab_msg-msgv3
+                msgv4               = mtab_msg-msgv4
+           IMPORTING
+                message_text_output = w_message-msgtx.
+
+
+    ENDLOOP.
+    MOVE w_message-msgtx TO i_results_tab-text.
+    MOVE '0' TO i_results_tab-error_type.
+    MOVE-CORRESPONDING i_cust_tab TO i_results_tab.
+    IF NOT p_create IS INITIAL.
+      MOVE mtab_msg-msgv1 TO i_results_tab-kunnr.
+    ELSE.
+    CONCATENATE  text-031  i_results_tab-kunnr text-032  INTO
+i_results_tab-text SEPARATED BY space.
+    ENDIF.
+    APPEND i_results_tab.
+  ENDIF.
+
+
+ENDFORM.                    " create_bdc_session
+* >>> Begin of modification KCFH423 CCL7031 EU1K925839  03/04/2007
+*&---------------------------------------------------------------------*
+*&      Form  generate_bdc_create
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM generate_bdc_create.
+
+* Load BDC table for use in BDC session.
+* Entry Screen
+  PERFORM load_bdc_table USING:
+     'X' 'SAPMF02D' '0100',
+     ' ' 'BDC_CURSOR' 'USE_ZAV',
+     ' ' 'BDC_OKCODE' '/00',
+     ' ' 'RF02D-BUKRS' i_cust_tab-bukrs,
+     ' ' 'RF02D-VKORG' i_cust_tab-vkorg,
+     ' ' 'RF02D-VTWEG' i_cust_tab-vtweg,
+     ' ' 'RF02D-SPART' i_cust_tab-spart,
+     ' ' 'RF02D-KTOKD' i_cust_tab-ktokd,
+     ' ' 'USE_ZAV' 'X',
+
+
+     'X' 'SAPMF02D' '0111',
+     ' ' 'BDC_OKCODE' '=$VER',
+     ' ' 'BDC_SUBSCR' ' SAPLSZA1
+0300address',
+     ' ' 'BDC_SUBSCR' 'SAPLSZA1
+0301country_screen',
+     ' ' 'BDC_CURSOR' 'ADDR1_DATA-DEFLT_COMM',
+     ' ' 'SZA1_D0100-TITLE_MEDI'  i_cust_tab-anred,
+     ' ' 'ADDR1_DATA-NAME1'  i_cust_tab-name1,
+     ' ' 'ADDR1_DATA-NAME2'  i_cust_tab-name2,
+     ' ' 'ADDR1_DATA-NAME3'  i_cust_tab-name3,
+     ' ' 'ADDR1_DATA-NAME4'  i_cust_tab-name4,
+     ' ' 'ADDR1_DATA-SORT1'  i_cust_tab-sortl,
+     ' ' 'ADDR1_DATA-STREET' i_cust_tab-stras,
+     ' ' 'ADDR1_DATA-HOUSE_NUM1' i_cust_tab-housenum,      "7031 kcfh423
+     ' ' 'ADDR1_DATA-PO_BOX' i_cust_tab-pfach,
+     ' ' 'ADDR1_DATA-CITY1'  i_cust_tab-ort01,
+     ' ' 'ADDR1_DATA-POST_CODE1' i_cust_tab-pstlz,
+     ' ' 'ADDR1_DATA-CITY2'  i_cust_tab-ort02,
+     ' ' 'ADDR1_DATA-POST_CODE2' i_cust_tab-pstl2,
+     ' ' 'ADDR1_DATA-PO_BOX_LOC' i_cust_tab-pfort,
+     ' ' 'ADDR1_DATA-COUNTRY' i_cust_tab-land1,
+     ' ' 'ADDR1_DATA-REGION' i_cust_tab-regio,
+     ' ' 'ADDR1_DATA-LANGU' i_cust_tab-spras,
+     ' ' 'SZA1_D0100-TEL_NUMBER' i_cust_tab-telf1,
+     ' ' 'SZA1_D0100-FAX_NUMBER' i_cust_tab-telfx,
+     ' ' 'SZA1_D0100-SMTP_ADDR' i_cust_tab-knurl,
+     ' ' 'ADDR1_DATA-TRANSPZONE' i_cust_tab-transpzone,    "7384 kcfh423
+
+     'X' 'SAPLSZA1' '0201',
+     ' ' 'BDC_OKCODE' '/ECANC',
+     ' ' 'BDC_CURSOR' 'SZA1_D0100-TITLE_MEDI',
+
+       'X' 'SAPMF02D' '0111',
+     ' ' 'BDC_OKCODE' '/00',
+     ' ' 'BDC_SUBSCR' ' SAPLSZA1
+0300address',
+     ' ' 'BDC_SUBSCR' 'SAPLSZA1
+0301country_screen',
+     ' ' 'BDC_CURSOR' 'ADDR1_DATA-DEFLT_COMM',
+     ' ' 'SZA1_D0100-TITLE_MEDI'  i_cust_tab-anred,
+     ' ' 'ADDR1_DATA-NAME1'  i_cust_tab-name1,
+     ' ' 'ADDR1_DATA-NAME2'  i_cust_tab-name2,
+     ' ' 'ADDR1_DATA-NAME3'  i_cust_tab-name3,
+     ' ' 'ADDR1_DATA-NAME4'  i_cust_tab-name4,
+     ' ' 'ADDR1_DATA-SORT1'  i_cust_tab-sortl,
+     ' ' 'ADDR1_DATA-STREET' i_cust_tab-stras,
+     ' ' 'ADDR1_DATA-HOUSE_NUM1' i_cust_tab-housenum,      "7031 kcfh423
+     ' ' 'ADDR1_DATA-PO_BOX' i_cust_tab-pfach,
+     ' ' 'ADDR1_DATA-CITY1'  i_cust_tab-ort01,
+     ' ' 'ADDR1_DATA-POST_CODE1' i_cust_tab-pstlz,
+     ' ' 'ADDR1_DATA-CITY2'  i_cust_tab-ort02,
+     ' ' 'ADDR1_DATA-POST_CODE2' i_cust_tab-pstl2,
+     ' ' 'ADDR1_DATA-PO_BOX_LOC' i_cust_tab-pfort,
+     ' ' 'ADDR1_DATA-COUNTRY' i_cust_tab-land1,
+     ' ' 'ADDR1_DATA-REGION' i_cust_tab-regio,
+     ' ' 'ADDR1_DATA-LANGU' i_cust_tab-spras,
+     ' ' 'SZA1_D0100-TEL_NUMBER' i_cust_tab-telf1,
+     ' ' 'SZA1_D0100-FAX_NUMBER' i_cust_tab-telfx,
+     ' ' 'SZA1_D0100-SMTP_ADDR' i_cust_tab-knurl,
+     ' ' 'ADDR1_DATA-TRANSPZONE' i_cust_tab-transpzone,    "7384 kcfh423
+
+*     'X' 'SAPLSAD0' '0110',
+*     ' ' 'BDC_OKCODE' '/EEXIT',
+*     ' ' 'BDC_CURSOR' 'SADR-ANRED',
+
+     'X' 'SAPMF02D' '0120',
+     ' ' 'BDC_CURSOR' 'KNA1-LOCCO',     "7384 kcfh423
+     ' ' 'BDC_OKCODE' '=VW',
+     ' ' 'KNA1-STCEG' i_cust_tab-stceg,
+     ' ' 'KNA1-STCD1' i_cust_tab-stcd1,
+     ' ' 'KNA1-STCD2' i_cust_tab-stcd2,
+     ' ' 'KNA1-BAHNE' i_cust_tab-bahne,
+     ' ' 'KNA1-BAHNS' i_cust_tab-bahns, "7384 kcfh423
+     ' ' 'KNA1-LOCCO' i_cust_tab-locco, "7384 kcfh423
+*     ' ' 'KNA1-LZONE' i_cust_tab-lzone,"7384 kcfh423
+
+     'X' 'SAPMF02D' '0125',
+     ' ' 'BDC_CURSOR' 'KNA1-KUKLA',
+     ' ' 'BDC_OKCODE' '=VW',
+     ' ' 'KNA1-KUKLA' i_cust_tab-kukla,
+     ' ' 'KNA1-BRSCH' i_cust_tab-brsch, "7384 kcfh423
+
+     'X' 'SAPMF02D' '0130',
+     ' ' 'BDC_OKCODE' '=VW'.
+
+  IF NOT i_cust_tab-banks IS INITIAL OR
+   NOT i_cust_tab-bankl IS INITIAL OR
+   NOT i_cust_tab-bankn IS INITIAL OR
+   NOT i_cust_tab-bkont IS INITIAL.
+
+    PERFORM load_bdc_table USING:
+    ' ' 'KNBK-BANKS(01)' i_cust_tab-banks,
+    ' ' 'KNBK-BANKL(01)' i_cust_tab-bankl,
+    ' ' 'KNBK-BANKN(01)' i_cust_tab-bankn,
+    ' ' 'KNBK-BKONT(01)' i_cust_tab-bkont,
+    ' ' 'KNBK-XEZER(01)' i_cust_tab-xezer.                 "7031 kcfh423
+
+  ENDIF.
+
+  PERFORM load_bdc_table USING:
+  'X' 'SAPMF02D' '0340',
+  ' ' 'BDC_CURSOR' 'RF02D-KUNNR',
+  ' ' 'BDC_OKCODE' '=VW'.
+
+  IF i_cust_tab-ktokd NE '0003'.
+    IF i_cust_tab-ktokd NE '0004'.
+      PERFORM load_bdc_table USING:
+      'X' 'SAPMF02D' '0370',
+      ' ' 'BDC_CURSOR' 'RF02D-KUNNR',
+      ' ' 'BDC_OKCODE' '=VW',
+      ' ' 'KNA1-CIVVE' i_cust_tab-civve.
+
+      PERFORM load_bdc_table USING:
+   'X' 'SAPMF02D' '0360',
+   ' ' 'BDC_CURSOR' '*TSAB-ABTNR',
+   ' ' 'BDC_OKCODE' '=RW',
+   ' ' 'KNVK-NAMEV(01)' i_cust_tab-namev,
+   ' ' 'KNVK-NAME1(01)' i_cust_tab-name1a,
+*  ' ' 'KNVK-SPNAM(01)' i_cust_tab-name2a,
+*  ' ' 'KNVK-TELF1(01)' i_cust_tab-telf1a,
+   ' ' 'KNVK-ABTNR(01)' i_cust_tab-abtnr,
+   ' ' 'KNVK-PAFKT(01)' i_cust_tab-pafkt.
+
+
+      PERFORM load_bdc_table USING:
+      'X' 'SAPMF02D' '0370',
+      ' ' 'BDC_CURSOR' 'RF02D-KUNNR',
+      ' ' 'BDC_OKCODE' '=ZUDA',
+      ' ' 'KNA1-CIVVE' i_cust_tab-civve.
+
+      PERFORM load_bdc_table USING:
+      'X' 'SAPLV02Z' '0100',
+      ' ' 'BDC_CURSOR' 'KNA1-KATR10',
+      ' ' 'BDC_OKCODE' '=BACK',
+      ' ' 'KNA1-KATR1' i_cust_tab-katr1,
+      ' ' 'KNA1-KATR2' i_cust_tab-katr2,                   "7031 kcfh423
+      ' ' 'KNA1-KATR3' i_cust_tab-katr3,                   "7031 kcfh423
+      ' ' 'KNA1-KATR4' i_cust_tab-katr4,                   "7031 kcfh423
+      ' ' 'KNA1-KATR5' i_cust_tab-katr5,                   "7031 kcfh423
+      ' ' 'KNA1-KATR6' i_cust_tab-katr6,
+      ' ' 'KNA1-KATR7' i_cust_tab-katr7,
+      ' ' 'KNA1-KATR8' i_cust_tab-katr8,
+      ' ' 'KNA1-KATR9' i_cust_tab-katr9,
+      ' ' 'KNA1-KATR10' i_cust_tab-katr10,
+      ' ' 'KNA1-KDKG2' i_cust_tab-kdkg2.                   "7031 kcfh423
+
+      PERFORM load_bdc_table USING:
+     'X' 'SAPMF02D' '0370',
+     ' ' 'BDC_CURSOR' 'RF02D-KUNNR',
+     ' ' 'BDC_OKCODE' '=VW',
+     ' ' 'KNA1-CIVVE' i_cust_tab-civve.
+    ENDIF.
+  ENDIF.
+
+  IF i_cust_tab-ktokd EQ '0003' OR
+     i_cust_tab-ktokd EQ '0004'.
+
+    PERFORM load_bdc_table USING:
+   'X' 'SAPMF02D' '0360',
+   ' ' 'BDC_CURSOR' '*TSAB-ABTNR',
+   ' ' 'BDC_OKCODE' '=ZUDA',
+   ' ' 'KNVK-NAMEV(01)' i_cust_tab-namev,
+   ' ' 'KNVK-NAME1(01)' i_cust_tab-name1a,
+*       ' ' 'KNVK-SPNAM(01)' i_cust_tab-name2a,
+*     ' ' 'KNVK-TELF1(01)' i_cust_tab-telf1a,
+   ' ' 'KNVK-ABTNR(01)' i_cust_tab-abtnr,
+   ' ' 'KNVK-PAFKT(01)' i_cust_tab-pafkt.
+
+    PERFORM load_bdc_table USING:
+      'X' 'SAPLV02Z' '0100',
+      ' ' 'BDC_CURSOR' 'KNA1-KATR10',
+      ' ' 'BDC_OKCODE' '=BACK',
+      ' ' 'KNA1-KATR1' i_cust_tab-katr1,
+      ' ' 'KNA1-KATR2' i_cust_tab-katr2,                   "7031 kcfh423
+      ' ' 'KNA1-KATR3' i_cust_tab-katr3,                   "7031 kcfh423
+      ' ' 'KNA1-KATR4' i_cust_tab-katr4,                   "7031 kcfh423
+      ' ' 'KNA1-KATR5' i_cust_tab-katr5,                   "7031 kcfh423
+      ' ' 'KNA1-KATR6' i_cust_tab-katr6,
+      ' ' 'KNA1-KATR7' i_cust_tab-katr7,
+      ' ' 'KNA1-KATR8' i_cust_tab-katr8,
+      ' ' 'KNA1-KATR9' i_cust_tab-katr9,
+      ' ' 'KNA1-KATR10' i_cust_tab-katr10,
+      ' ' 'KNA1-KDKG2' i_cust_tab-kdkg2.                   "7031 kcfh423
+
+    PERFORM load_bdc_table USING:
+    'X' 'SAPMF02D' '0360',
+    ' ' 'BDC_CURSOR' 'KNVK-NAMEV(01)',
+    ' ' 'BDC_OKCODE' '=VW'.
+
+  ENDIF.
+
+
+  IF i_cust_tab-ktokd NE '0003'.
+    IF i_cust_tab-ktokd NE '0004'.
+
+      PERFORM load_bdc_table USING:
+        'X' 'SAPMF02D' '0360',
+        ' ' 'BDC_CURSOR' 'KNVK-NAMEV(01)',
+        ' ' 'BDC_OKCODE' '=VW'.
+    ENDIF.
+  ENDIF.
+
+  IF NOT i_cust_tab-bukrs IS INITIAL.
+
+    PERFORM load_bdc_table USING:
+    'X' 'SAPMF02D' '0210',
+    ' ' 'BDC_CURSOR' 'KNB1-ALTKN',
+    ' ' 'BDC_OKCODE' '=VW',
+    ' ' 'KNB1-AKONT' i_cust_tab-akont,
+    ' ' 'KNB1-ZUAWA' i_cust_tab-zuawa,
+    ' ' 'KNB1-ALTKN' i_cust_tab-altkn,
+
+    'X' 'SAPMF02D' '0215',
+    ' ' 'BDC_CURSOR' 'KNB1-ZGRUP',
+    ' ' 'BDC_OKCODE' '=VW',
+    ' ' 'KNB1-ZTERM' i_cust_tab-zterm,
+    ' ' 'KNB1-ZWELS' i_cust_tab-zwels,
+    ' ' 'KNB1-ZAHLS' i_cust_tab-zahls,
+    ' ' 'KNB1-HBKID' i_cust_tab-hbkid,
+
+    'X' 'SAPMF02D' '0220',
+    ' ' 'BDC_CURSOR' 'KNB5-MAHNA',
+    ' ' 'BDC_OKCODE' '/00',
+
+    'X' 'SAPMF02D' '0230',
+    ' ' 'BDC_CURSOR' 'KNB1-VRSNR',
+    ' ' 'BDC_OKCODE' '=RW',
+
+    'X' 'SAPMF02D' '0220',
+    ' ' 'BDC_CURSOR' 'KNB1-EIKTO',
+    ' ' 'BDC_OKCODE' '=VW',
+    ' ' 'KNB5-MAHNA' i_cust_tab-mahna,
+    ' ' 'KNB5-MANSP' i_cust_tab-mansp,
+    ' ' 'KNB5-MAHNS' i_cust_tab-mahns,
+    ' ' 'KNB1-BUSAB' i_cust_tab-busab,
+    ' ' 'KNB1-EIKTO' i_cust_tab-eikto,
+    ' ' 'KNB1-XAUSZ' i_cust_tab-xausz,
+
+    'X' 'SAPMF02D' '0230',
+    ' ' 'BDC_CURSOR' 'KNB1-VRSNR',
+    ' ' 'BDC_OKCODE' '=VW'.
+
+    IF i_cust_tab-bukrs(2) IN r_wtax_cntry .
+      PERFORM load_bdc_table USING:
+      'X' 'SAPMF02D' '0610',
+      ' ' 'BDC_CURSOR' 'KNBW-WITHT',
+      ' ' 'BDC_OKCODE' '=VW'.
+    ENDIF.
+  ENDIF.
+
+  PERFORM load_bdc_table USING:
+  'X' 'SAPMF02D' '0310',
+  ' ' 'BDC_CURSOR' 'KNVV-RDOFF',
+  ' ' 'BDC_OKCODE' '=VW',
+  ' ' 'KNVV-RDOFF' i_cust_tab-rdoff.                       "7031 kcfh423
+
+  IF i_cust_tab-ktokd NE '0002' AND
+     i_cust_tab-ktokd EQ '0003'.
+    PERFORM load_bdc_table USING:
+    ' ' 'KNVV-KDGRP' i_cust_tab-kdgrp.
+  ENDIF.
+
+  IF i_cust_tab-ktokd NE '0002'.
+    IF i_cust_tab-ktokd NE '0003'.
+      IF i_cust_tab-ktokd NE '0004'.
+        PERFORM load_bdc_table USING:
+        ' ' 'KNVV-BZIRK' i_cust_tab-bzirk,
+        ' ' 'KNVV-VKGRP' i_cust_tab-vkgrp,
+        ' ' 'KNVV-VKBUR' i_cust_tab-vkbur,
+        ' ' 'KNVV-KDGRP' i_cust_tab-kdgrp,
+        ' ' 'KNVV-WAERS' i_cust_tab-waers,
+        ' ' 'KNVV-KONDA' i_cust_tab-konda,
+        ' ' 'KNVV-KALKS' i_cust_tab-kalks,
+        ' ' 'KNVV-PLTYP' i_cust_tab-pltyp.
+      ENDIF.
+    ENDIF.
+  ENDIF.
+
+  IF i_cust_tab-ktokd NE '0003'.
+    IF i_cust_tab-ktokd NE '0004'.
+      PERFORM load_bdc_table USING:
+         'X' 'SAPMF02D' '0315',
+         ' ' 'BDC_CURSOR' 'KNVV-VSBED',
+         ' ' 'BDC_OKCODE' '=VW',
+         ' ' 'KNVV-LPRIO' i_cust_tab-lprio,
+         ' ' 'KNVV-KZAZU' i_cust_tab-kzazu,
+         ' ' 'KNVV-VSBED' i_cust_tab-vsbed,
+         ' ' 'KNVV-VWERK' i_cust_tab-vwerk,                "7031 kcfh423
+         ' ' 'KNVV-AUTLF' i_cust_tab-autlf,                "7384 kcfh423
+         ' ' 'KNVV-KZTLF' i_cust_tab-kztlf,                "7384 kcfh423
+         ' ' 'KNVV-ANTLF' i_cust_tab-antlf.
+    ENDIF.
+  ENDIF.
+
+  IF i_cust_tab-ktokd NE '0002'.
+    IF i_cust_tab-ktokd NE '0004'.
+      PERFORM load_bdc_table USING:
+         'X' 'SAPMF02D' '0320',
+         ' ' 'BDC_CURSOR' 'KNVV-KTGRD',
+         ' ' 'BDC_OKCODE' '=VW',
+         ' ' 'KNVV-MRNKZ' i_cust_tab-mrnkz,
+         ' ' 'KNVV-BOKRE' i_cust_tab-bokre,
+         ' ' 'KNVV-PRFRE' i_cust_tab-prfre,
+         ' ' 'KNVV-PERFK' i_cust_tab-perfk,                "7384 kcfh423
+         ' ' 'KNVV-PERRL' i_cust_tab-perrl,                "7384 kcfh423
+         ' ' 'KNVV-ZTERM' i_cust_tab-zterma,
+         ' ' 'KNVV-INCO1' i_cust_tab-inco1,
+         ' ' 'KNVV-INCO2' i_cust_tab-inco2,
+         ' ' 'KNVV-KTGRD' i_cust_tab-ktgrd.
+    ENDIF.
+  ENDIF.
+
+
+  IF i_cust_tab-ktokd NE '0004'.
+
+    PERFORM load_bdc_table USING:
+      'X' 'SAPMF02D' '1350',
+      ' ' 'BDC_CURSOR' 'KNVI-TAXKD(01)',
+      ' ' 'BDC_OKCODE' '=ENTR',
+      ' ' 'KNVI-TAXKD(01)' i_cust_tab-taxkd.
+
+    IF i_cust_tab-bukrs(2) EQ 'ES'.
+      PERFORM load_bdc_table USING:
+      ' ' 'KNVI-TAXKD(02)' '0'.
+    ENDIF.
+
+
+    PERFORM load_bdc_table USING:
+       'X' 'SAPMF02D' '1350',
+       ' ' 'BDC_CURSOR' 'RF02D-KUNNR',
+       ' ' 'BDC_OKCODE' '=RW',
+
+       'X' 'SAPMF02D' '1350',
+       ' ' 'BDC_CURSOR' 'KNVI-TAXKD(01)',
+       ' ' 'BDC_OKCODE' '=ENTR',
+
+       'X' 'SAPMF02D' '0324',
+       ' ' 'BDC_CURSOR' 'KNVP-PARVW(01)',
+       ' ' 'BDC_OKCODE' '=RW',
+
+       'X' 'SAPMF02D' '1350',
+       ' ' 'BDC_CURSOR' 'RF02D-KUNNR',
+       ' ' 'BDC_OKCODE' '=ZUDA',
+
+       'X' 'SAPLV02Z' '0200',
+       ' ' 'BDC_CURSOR' 'KNVV-KVGR5',
+       ' ' 'BDC_OKCODE' '=BACK',
+       ' ' 'KNVV-KVGR1' i_cust_tab-kvgr1,
+       ' ' 'KNVV-KVGR2' i_cust_tab-kvgr2,
+       ' ' 'KNVV-KVGR3' i_cust_tab-kvgr3,
+       ' ' 'KNVV-KVGR4' i_cust_tab-kvgr4,
+       ' ' 'KNVV-KVGR5' i_cust_tab-kvgr5,
+
+       'X' 'SAPMF02D' '1350',
+       ' ' 'BDC_CURSOR' 'RF02D-KUNNR',
+       ' ' 'BDC_OKCODE' '=0510',
+
+       'X' 'SAPMF02D' '0510',
+       ' ' 'BDC_CURSOR' 'KNA1-SPERR',
+       ' ' 'BDC_OKCODE' '=PF03',
+       ' ' 'KNA1-SPERR' i_cust_tab-sperr,
+       ' ' 'KNA1-AUFSD' i_cust_tab-aufsd,
+       ' ' 'KNA1-LIFSD' i_cust_tab-lifsd,
+       ' ' 'KNA1-FAKSD' i_cust_tab-faksd,
+
+       'X' 'SAPMF02D' '1350',
+       ' ' 'BDC_CURSOR' 'RF02D-KUNNR',
+       ' ' 'BDC_OKCODE' '=VW',
+
+       'X' 'SAPMF02D' '0324',
+       ' ' 'BDC_CURSOR' 'KNVP-PARVW(01)',
+       ' ' 'BDC_OKCODE' '=RW',
+
+       'X' 'SAPMF02D' '1350',
+       ' ' 'BDC_CURSOR' 'RF02D-KUNNR',
+       ' ' 'BDC_OKCODE' '=0520',
+
+       'X' 'SAPMF02D' '0520',
+       ' ' 'BDC_CURSOR' 'KNVV-LOEVM',
+       ' ' 'BDC_OKCODE' '=PF03',
+       ' ' 'KNA1-LOEVM' i_cust_tab-loevm.
+
+    IF NOT i_cust_tab-bukrs IS INITIAL.
+      PERFORM load_bdc_table USING:
+      ' ' 'KNB1-LOEVM' i_cust_tab-loevm1.
+    ENDIF.
+
+    PERFORM load_bdc_table USING:
+    ' ' 'KNVV-LOEVM' i_cust_tab-loevm2,
+
+    'X' 'SAPMF02D' '1350',
+    ' ' 'BDC_CURSOR' 'RF02D-KUNNR',
+    ' ' 'BDC_OKCODE' '=VW',
+
+    'X' 'SAPMF02D' '0324',
+    ' ' 'BDC_CURSOR' 'KNVP-PARVW(01)',
+    ' ' 'BDC_OKCODE' '=VW'.
+  ENDIF.
+
+
+  IF i_cust_tab-ktokd EQ '0004'.
+
+    PERFORM load_bdc_table USING:
+       'X' 'SAPMF02D' '0324',
+       ' ' 'BDC_CURSOR' 'KNVP-PARVW(01)',
+       ' ' 'BDC_OKCODE' '=RW',
+
+       'X' 'SAPMF02D' '0310',
+       ' ' 'BDC_CURSOR' 'RF02D-KUNNR',
+       ' ' 'BDC_OKCODE' '=ZUDA',
+
+      'X' 'SAPLV02Z' '0200',
+       ' ' 'BDC_CURSOR' 'KNVV-KVGR5',
+       ' ' 'BDC_OKCODE' '=BACK',
+       ' ' 'KNVV-KVGR1' i_cust_tab-kvgr1,
+       ' ' 'KNVV-KVGR2' i_cust_tab-kvgr2,
+       ' ' 'KNVV-KVGR3' i_cust_tab-kvgr3,
+       ' ' 'KNVV-KVGR4' i_cust_tab-kvgr4,
+       ' ' 'KNVV-KVGR5' i_cust_tab-kvgr5,
+
+       'X' 'SAPMF02D' '0310',
+       ' ' 'BDC_CURSOR' 'RF02D-KUNNR',
+       ' ' 'BDC_OKCODE' '=0510',
+
+       'X' 'SAPMF02D' '0510',
+       ' ' 'BDC_CURSOR' 'KNA1-SPERR',
+       ' ' 'BDC_OKCODE' '=PF03',
+       ' ' 'KNA1-SPERR' i_cust_tab-sperr,
+       ' ' 'KNA1-AUFSD' i_cust_tab-aufsd,
+       ' ' 'KNA1-LIFSD' i_cust_tab-lifsd,
+       ' ' 'KNA1-FAKSD' i_cust_tab-faksd,
+
+       'X' 'SAPMF02D' '0310',
+       ' ' 'BDC_CURSOR' 'RF02D-KUNNR',
+       ' ' 'BDC_OKCODE' '=VW',
+
+       'X' 'SAPMF02D' '0324',
+       ' ' 'BDC_CURSOR' 'KNVP-PARVW(01)',
+       ' ' 'BDC_OKCODE' '=RW',
+
+       'X' 'SAPMF02D' '0310',
+       ' ' 'BDC_CURSOR' 'RF02D-KUNNR',
+       ' ' 'BDC_OKCODE' '=0520',
+
+       'X' 'SAPMF02D' '0520',
+       ' ' 'BDC_CURSOR' 'KNVV-LOEVM',
+       ' ' 'BDC_OKCODE' '=PF03',
+       ' ' 'KNA1-LOEVM' i_cust_tab-loevm.
+
+    IF NOT i_cust_tab-bukrs IS INITIAL.
+      PERFORM load_bdc_table USING:
+      ' ' 'KNB1-LOEVM' i_cust_tab-loevm1.
+    ENDIF.
+
+    PERFORM load_bdc_table USING:
+    ' ' 'KNVV-LOEVM' i_cust_tab-loevm2,
+
+    'X' 'SAPMF02D' '0310',
+    ' ' 'BDC_CURSOR' 'RF02D-KUNNR',
+    ' ' 'BDC_OKCODE' '=VW',
+
+    'X' 'SAPMF02D' '0324',
+    ' ' 'BDC_CURSOR' 'KNVP-PARVW(01)',
+    ' ' 'BDC_OKCODE' '=VW'.
+  ENDIF.
+
+
+ENDFORM.                    " generate_bdc_create
+*&---------------------------------------------------------------------*
+*&      Form  generate_bdc_change
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM generate_bdc_change.
+
+*  DATA: l_cnt(2) TYPE c.
+
+  IF  i_cust_tab-ktokd IS INITIAL.
+
+    SELECT SINGLE ktokd FROM kna1
+    INTO i_cust_tab-ktokd
+    WHERE kunnr = i_cust_tab-kunnr.
+
+    IF sy-subrc = 0.
+
+      CALL FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
+           EXPORTING
+                input  = i_cust_tab-akont
+           IMPORTING
+                output = i_cust_tab-akont.
+    ENDIF.
+  ENDIF.
+
+  PERFORM load_bdc_table USING:
+     'X' 'SAPMF02D' '0101',
+     ' ' 'BDC_CURSOR' 'RF02D-D0324',
+     ' ' 'BDC_OKCODE' '/00',
+     ' ' 'RF02D-KUNNR' i_cust_tab-kunnr.
+
+  IF NOT i_cust_tab-bukrs IS INITIAL.
+    PERFORM load_bdc_table USING:
+      ' ' 'RF02D-BUKRS' i_cust_tab-bukrs.
+  ENDIF.
+
+  IF NOT i_cust_tab-vkorg IS INITIAL AND
+     NOT i_cust_tab-vtweg IS INITIAL AND
+     NOT i_cust_tab-spart IS INITIAL.
+    PERFORM load_bdc_table USING:
+    ' ' 'RF02D-VKORG' i_cust_tab-vkorg,
+    ' ' 'RF02D-VTWEG' i_cust_tab-vtweg,
+    ' ' 'RF02D-SPART' i_cust_tab-spart.
+  ENDIF.
+
+  PERFORM load_bdc_table USING:
+  ' ' 'RF02D-D0110' 'X',
+  ' ' 'RF02D-D0120' 'X',
+  ' ' 'RF02D-D0125' 'X',
+  ' ' 'RF02D-D0130' 'X',
+  ' ' 'RF02D-D0600' 'X'.
+
+  IF NOT i_cust_tab-bukrs IS INITIAL.
+    PERFORM load_bdc_table USING:
+    ' ' 'RF02D-D0210' 'X',
+    ' ' 'RF02D-D0215' 'X',
+    ' ' 'RF02D-D0220' 'X',
+    ' ' 'RF02D-D0230' 'X',
+    ' ' 'RF02D-D0610' 'X'.
+  ENDIF.
+
+  PERFORM load_bdc_table USING:
+  ' ' 'RF02D-D0340' 'X',
+  ' ' 'RF02D-D0370' 'X',
+  ' ' 'RF02D-D0360' 'X',
+  ' ' 'USE_ZAV' 'X'.
+
+  IF NOT i_cust_tab-vkorg IS INITIAL AND
+     NOT i_cust_tab-vtweg IS INITIAL AND
+     NOT i_cust_tab-spart IS INITIAL.
+    PERFORM load_bdc_table USING:
+    ' ' 'RF02D-D0310' 'X',
+    ' ' 'RF02D-D0315' 'X',
+    ' ' 'RF02D-D0320' 'X',
+    ' ' 'RF02D-D0326' 'X',
+    ' ' 'RF02D-D0324' 'X'.
+  ENDIF.
+
+
+  PERFORM load_bdc_table_mod USING:
+     'X' 'SAPMF02D' '0111',
+     ' ' 'BDC_OKCODE' '/00',
+     ' ' 'BDC_SUBSCR' ' SAPLSZA1
+0300address',
+     ' ' 'BDC_SUBSCR' 'SAPLSZA1
+0301country_screen',
+     ' ' 'BDC_CURSOR' 'SZA1_D0100-SMTP_ADDR',
+     ' ' 'SZA1_D0100-TITLE_MEDI' i_cust_tab-anred,
+     ' ' 'ADDR1_DATA-NAME1'  i_cust_tab-name1,
+     ' ' 'ADDR1_DATA-NAME2'  i_cust_tab-name2,
+     ' ' 'ADDR1_DATA-NAME3'  i_cust_tab-name3,
+     ' ' 'ADDR1_DATA-NAME4'  i_cust_tab-name4,
+     ' ' 'ADDR1_DATA-SORT1'  i_cust_tab-sortl,
+     ' ' 'ADDR1_DATA-STREET' i_cust_tab-stras,
+     ' ' 'ADDR1_DATA-HOUSE_NUM1' i_cust_tab-housenum,      "7031 kcfh423
+     ' ' 'ADDR1_DATA-PO_BOX' i_cust_tab-pfach,
+     ' ' 'ADDR1_DATA-CITY1'  i_cust_tab-ort01,
+     ' ' 'ADDR1_DATA-POST_CODE1' i_cust_tab-pstlz,
+     ' ' 'ADDR1_DATA-CITY2'  i_cust_tab-ort02,
+     ' ' 'ADDR1_DATA-POST_CODE2' i_cust_tab-pstl2,
+     ' ' 'ADDR1_DATA-PO_BOX_LOC' i_cust_tab-pfort,
+     ' ' 'ADDR1_DATA-COUNTRY' i_cust_tab-land1,
+     ' ' 'ADDR1_DATA-REGION' i_cust_tab-regio,
+     ' ' 'ADDR1_DATA-LANGU' i_cust_tab-spras,
+     ' ' 'SZA1_D0100-TEL_NUMBER' i_cust_tab-telf1,
+     ' ' 'SZA1_D0100-FAX_NUMBER' i_cust_tab-telfx,
+     ' ' 'SZA1_D0100-SMTP_ADDR' i_cust_tab-knurl,
+     ' ' 'ADDR1_DATA-TRANSPZONE' i_cust_tab-transpzone,    "7384 kcfh423
+
+     'X' 'SAPMF02D' '0120',
+     ' ' 'BDC_CURSOR' 'KNA1-LOCCO',                        "7384 kcfh423
+     ' ' 'BDC_OKCODE' '/00',
+     ' ' 'KNA1-STCEG' i_cust_tab-stceg,
+     ' ' 'KNA1-STCD1' i_cust_tab-stcd1,
+     ' ' 'KNA1-STCD2' i_cust_tab-stcd2,
+     ' ' 'KNA1-BAHNE' i_cust_tab-bahne,
+     ' ' 'KNA1-BAHNS' i_cust_tab-bahns,                    "7384 kcfh423
+     ' ' 'KNA1-LOCCO' i_cust_tab-locco,                    "7384 kcfh423
+*    ' ' 'KNA1-LZONE' i_cust_tab-lzone,                    "7384 kcfh423
+
+     'X' 'SAPMF02D' '0125',
+     ' ' 'BDC_CURSOR' 'KNA1-KUKLA',
+     ' ' 'BDC_OKCODE' '=VW',
+     ' ' 'KNA1-KUKLA' i_cust_tab-kukla,
+     ' ' 'KNA1-BRSCH' i_cust_tab-brsch.                    "7384 kcfh423
+
+  IF NOT i_cust_tab-banks IS INITIAL OR
+     NOT i_cust_tab-bankl IS INITIAL OR
+     NOT i_cust_tab-bankn IS INITIAL.
+    PERFORM load_bdc_table_mod USING:
+    'X' 'SAPMF02D' '0130',
+    ' ' 'BDC_CURSOR' 'KNBK-BANKN(01)',
+    ' ' 'BDC_OKCODE' '=BDEL'.
+
+    IF  i_cust_tab-banks NE p_cchar OR
+        i_cust_tab-bankl NE p_cchar OR
+        i_cust_tab-bankn NE p_cchar.
+
+      PERFORM load_bdc_table_mod USING:
+        'X' 'SAPMF02D' '0130',
+        ' ' 'BDC_CURSOR' 'KNBK-BANKN(01)',
+        ' ' 'BDC_OKCODE' '=VW',
+        ' ' 'KNBK-BANKS(01)' i_cust_tab-banks,
+        ' ' 'KNBK-BANKL(01)' i_cust_tab-bankl,
+        ' ' 'KNBK-BANKN(01)' i_cust_tab-bankn,
+        ' ' 'KNBK-BKONT(01)' i_cust_tab-bkont,
+        ' ' 'KNBK-XEZER(01)' i_cust_tab-xezer.             "7031 kcfh423
+    ELSE.
+
+      PERFORM load_bdc_table_mod USING:
+       'X' 'SAPMF02D' '0130',
+       ' ' 'BDC_CURSOR' 'KNBK-BANKN(01)',
+       ' ' 'BDC_OKCODE' '=VW'.
+    ENDIF.
+  ELSE.
+    PERFORM load_bdc_table_mod USING:
+     'X' 'SAPMF02D' '0130',
+     ' ' 'BDC_CURSOR' 'KNBK-BANKN(01)',
+     ' ' 'BDC_OKCODE' '=VW'.
+  ENDIF.
+
+  PERFORM load_bdc_table_mod USING:
+  'X' 'SAPMF02D' '0340',
+  ' ' 'BDC_CURSOR' 'RF02D-KUNNR',
+  ' ' 'BDC_OKCODE' '=VW'.
+
+  IF i_cust_tab-ktokd NE '0003'.
+    IF i_cust_tab-ktokd NE '0004'.
+      PERFORM load_bdc_table_mod USING:
+
+        'X' 'SAPMF02D' '0370',
+        ' ' 'BDC_CURSOR' 'RF02D-KUNNR',
+        ' ' 'BDC_OKCODE' '=VW',
+        ' ' 'KNA1-CIVVE' i_cust_tab-civve,
+
+         'X' 'SAPMF02D' '0360',
+         ' ' 'BDC_CURSOR' 'KNVK-PAFKT(01)',
+         ' ' 'BDC_OKCODE' '=RW',
+         ' ' 'KNVK-NAMEV(01)' i_cust_tab-namev,
+         ' ' 'KNVK-NAME1(01)' i_cust_tab-name1a,
+*       ' ' 'KNVK-SPNAM(01)' i_cust_tab-name2a,
+*       ' ' 'KNVK-TELF1(01)' i_cust_tab-telf1a,
+         ' ' 'KNVK-ABTNR(01)' i_cust_tab-abtnr,
+         ' ' 'KNVK-PAFKT(01)' i_cust_tab-pafkt,
+
+        'X' 'SAPMF02D' '0370',
+        ' ' 'BDC_CURSOR' 'RF02D-KUNNR',
+        ' ' 'BDC_OKCODE' '=ZUDA',
+        ' ' 'KNA1-CIVVE' i_cust_tab-civve,
+
+        'X' 'SAPLV02Z' '0100',
+        ' ' 'BDC_CURSOR' 'KNA1-KATR10',
+        ' ' 'BDC_OKCODE' '=BACK',
+        ' ' 'KNA1-KATR1' i_cust_tab-katr1,
+        ' ' 'KNA1-KATR2' i_cust_tab-katr2,                 "7031 kcfh423
+        ' ' 'KNA1-KATR3' i_cust_tab-katr3,                 "7031 kcfh423
+        ' ' 'KNA1-KATR4' i_cust_tab-katr4,                 "7031 kcfh423
+        ' ' 'KNA1-KATR5' i_cust_tab-katr5,                 "7031 kcfh423
+        ' ' 'KNA1-KATR6' i_cust_tab-katr6,
+        ' ' 'KNA1-KATR7' i_cust_tab-katr7,
+        ' ' 'KNA1-KATR8' i_cust_tab-katr8,
+        ' ' 'KNA1-KATR9' i_cust_tab-katr9,
+        ' ' 'KNA1-KATR10' i_cust_tab-katr10,
+        ' ' 'KNA1-KDKG2' i_cust_tab-kdkg2.                 "7031 kcfh423
+
+      IF i_cust_tab-vkorg IS INITIAL AND
+         i_cust_tab-vtweg IS INITIAL AND
+         i_cust_tab-spart IS INITIAL.
+
+        PERFORM load_bdc_table_mod USING:
+        'X' 'SAPMF02D' '370',
+        ' ' 'BDC_CURSOR' 'RF02D-KUNNR',
+        ' ' 'BDC_OKCODE' '=0510',
+        ' ' 'KNA1-CIVVE' i_cust_tab-civve,
+
+        'X' 'SAPMF02D' '0510',
+        ' ' 'BDC_CURSOR' 'KNA1-SPERR',
+        ' ' 'BDC_OKCODE' '=PF03',
+        ' ' 'KNA1-SPERR' i_cust_tab-sperr,
+        ' ' 'KNA1-AUFSD' i_cust_tab-aufsd,
+        ' ' 'KNA1-LIFSD' i_cust_tab-lifsd,
+        ' ' 'KNA1-FAKSD' i_cust_tab-faksd,
+
+        'X' 'SAPMF02D' '370',
+        ' ' 'BDC_CURSOR' 'RF02D-KUNNR',
+        ' ' 'BDC_OKCODE' '=0520',
+        ' ' 'KNA1-CIVVE' i_cust_tab-civve,
+
+        'X' 'SAPMF02D' '0520',
+        ' ' 'BDC_CURSOR' 'KNA1-LOEVM',
+        ' ' 'BDC_OKCODE' '=PF03',
+        ' ' 'KNA1-LOEVM' i_cust_tab-loevm.
+
+        IF NOT i_cust_tab-bukrs IS  INITIAL.
+          PERFORM load_bdc_table_mod USING:
+          ' ' 'KNB1-LOEVM' i_cust_tab-loevm1.
+        ENDIF.
+      ENDIF.
+
+      PERFORM load_bdc_table_mod USING:
+      'X' 'SAPMF02D' '370',
+      ' ' 'BDC_CURSOR' 'RF02D-KUNNR',
+      ' ' 'BDC_OKCODE' '=VW',
+      ' ' 'KNA1-CIVVE' i_cust_tab-civve.
+    ENDIF.
+  ENDIF.
+
+  IF i_cust_tab-ktokd EQ '0003' OR
+     i_cust_tab-ktokd EQ '0004'.
+
+    PERFORM load_bdc_table_mod USING:
+
+    'X' 'SAPMF02D' '0360',
+    ' ' 'BDC_CURSOR' 'KNVK-PAFKT(01)',
+    ' ' 'BDC_OKCODE' '=ZUDA',
+    ' ' 'KNVK-NAMEV(01)' i_cust_tab-namev,
+    ' ' 'KNVK-NAME1(01)' i_cust_tab-name1a,
+*       ' ' 'KNVK-SPNAM(01)' i_cust_tab-name2a,
+*    ' ' 'KNVK-TELF1(01)' i_cust_tab-telf1a,
+    ' ' 'KNVK-ABTNR(01)' i_cust_tab-abtnr,
+    ' ' 'KNVK-PAFKT(01)' i_cust_tab-pafkt.
+
+    PERFORM load_bdc_table_mod USING:
+      'X' 'SAPLV02Z' '0100',
+      ' ' 'BDC_CURSOR' 'KNA1-KATR10',
+      ' ' 'BDC_OKCODE' '=BACK',
+      ' ' 'KNA1-KATR1' i_cust_tab-katr1,
+      ' ' 'KNA1-KATR2' i_cust_tab-katr2,                   "7031 kcfh423
+      ' ' 'KNA1-KATR3' i_cust_tab-katr3,                   "7031 kcfh423
+      ' ' 'KNA1-KATR4' i_cust_tab-katr4,                   "7031 kcfh423
+      ' ' 'KNA1-KATR5' i_cust_tab-katr5,                   "7031 kcfh423
+      ' ' 'KNA1-KATR6' i_cust_tab-katr6,
+      ' ' 'KNA1-KATR7' i_cust_tab-katr7,
+      ' ' 'KNA1-KATR8' i_cust_tab-katr8,
+      ' ' 'KNA1-KATR9' i_cust_tab-katr9,
+      ' ' 'KNA1-KATR10' i_cust_tab-katr10,
+      ' ' 'KNA1-KDKG2' i_cust_tab-kdkg2.                   "7031 kcfh423
+
+    IF i_cust_tab-vkorg IS INITIAL AND
+       i_cust_tab-vtweg IS INITIAL AND
+       i_cust_tab-spart IS INITIAL.
+
+
+      PERFORM load_bdc_table_mod USING:
+      'X' 'SAPMF02D' '0360',
+      ' ' 'BDC_CURSOR' 'KNVK-NAMEV(01)',
+      ' ' 'BDC_OKCODE' '=0510',
+
+      'X' 'SAPMF02D' '0510',
+      ' ' 'BDC_CURSOR' 'KNA1-SPERR',
+      ' ' 'BDC_OKCODE' '=PF03',
+      ' ' 'KNA1-SPERR' i_cust_tab-sperr,
+      ' ' 'KNA1-AUFSD' i_cust_tab-aufsd,
+      ' ' 'KNA1-LIFSD' i_cust_tab-lifsd,
+      ' ' 'KNA1-FAKSD' i_cust_tab-faksd,
+
+      'X' 'SAPMF02D' '0360',
+      ' ' 'BDC_CURSOR' 'KNVK-NAMEV(01)',
+      ' ' 'BDC_OKCODE' '=0520',
+
+      'X' 'SAPMF02D' '0520',
+        ' ' 'BDC_CURSOR' 'KNA1-LOEVM',
+        ' ' 'BDC_OKCODE' '=PF03',
+        ' ' 'KNA1-LOEVM' i_cust_tab-loevm.
+
+      IF NOT i_cust_tab-bukrs IS  INITIAL.
+        PERFORM load_bdc_table_mod USING:
+        ' ' 'KNB1-LOEVM' i_cust_tab-loevm1.
+      ENDIF.
+    ENDIF.
+
+    PERFORM load_bdc_table_mod USING:
+    'X' 'SAPMF02D' '0360',
+    ' ' 'BDC_CURSOR' 'KNVK-NAMEV(01)',
+    ' ' 'BDC_OKCODE' '=VW'.
+
+  ENDIF.
+
+
+  IF i_cust_tab-ktokd NE '0003'.
+    IF i_cust_tab-ktokd NE '0004'.
+
+      PERFORM load_bdc_table USING:
+        'X' 'SAPMF02D' '0360',
+        ' ' 'BDC_CURSOR' 'KNVK-NAMEV(01)',
+        ' ' 'BDC_OKCODE' '=VW'.
+    ENDIF.
+  ENDIF.
+
+  IF NOT i_cust_tab-bukrs IS INITIAL.
+
+    PERFORM load_bdc_table_mod USING:
+    'X' 'SAPMF02D' '0210',
+    ' ' 'BDC_CURSOR' 'KNB1-ALTKN',
+    ' ' 'BDC_OKCODE' '=VW',
+    ' ' 'KNB1-AKONT' i_cust_tab-akont,
+    ' ' 'KNB1-ZUAWA' i_cust_tab-zuawa,
+    ' ' 'KNB1-ALTKN' i_cust_tab-altkn,
+
+    'X' 'SAPMF02D' '0215',
+    ' ' 'BDC_CURSOR' 'KNB1-HBKID',
+    ' ' 'BDC_OKCODE' '=VW',
+    ' ' 'KNB1-ZTERM' i_cust_tab-zterm,
+    ' ' 'KNB1-ZWELS' i_cust_tab-zwels,
+    ' ' 'KNB1-ZAHLS' i_cust_tab-zahls,
+    ' ' 'KNB1-HBKID' i_cust_tab-hbkid,
+
+    'X' 'SAPMF02D' '0220',
+    ' ' 'BDC_CURSOR' 'KNB1-XAUSZ',
+    ' ' 'BDC_OKCODE' '=VW',
+    ' ' 'KNB5-MAHNA' i_cust_tab-mahna,
+    ' ' 'KNB5-MANSP' i_cust_tab-mansp,
+    ' ' 'KNB5-MAHNS' i_cust_tab-mahns,
+    ' ' 'KNB1-BUSAB' i_cust_tab-busab,
+    ' ' 'KNB1-EIKTO' i_cust_tab-eikto,
+    ' ' 'KNB1-XAUSZ' i_cust_tab-xausz,
+
+
+     'X' 'SAPMF02D' '0230',
+    ' ' 'BDC_CURSOR' 'KNB1-VRSNR',
+    ' ' 'BDC_OKCODE' '=VW'.
+
+    IF i_cust_tab-bukrs(2) IN r_wtax_cntry.
+      PERFORM load_bdc_table_mod USING:
+      'X' 'SAPMF02D' '0610',
+      ' ' 'BDC_CURSOR' 'KNBW-WITHT',
+      ' ' 'BDC_OKCODE' '=VW'.
+    ENDIF.
+  ENDIF.
+
+
+  IF NOT i_cust_tab-vkorg IS INITIAL AND
+     NOT i_cust_tab-vtweg IS INITIAL AND
+     NOT i_cust_tab-spart IS INITIAL.
+
+    PERFORM load_bdc_table_mod USING :
+    'X' 'SAPMF02D' '0310',
+    ' ' 'BDC_CURSOR' 'KNVV-RDOFF',
+    ' ' 'BDC_OKCODE' '=VW',
+    ' ' 'KNVV-RDOFF' i_cust_tab-rdoff.                     "7031 kcfh423
+
+    IF i_cust_tab-ktokd NE '0002' AND
+       i_cust_tab-ktokd EQ '0003'.
+      PERFORM load_bdc_table_mod USING:
+      ' ' 'KNVV-KDGRP' i_cust_tab-kdgrp.
+    ENDIF.
+
+    IF i_cust_tab-ktokd NE '0002'.
+      IF i_cust_tab-ktokd NE '0003'.
+        IF i_cust_tab-ktokd NE '0004'.
+          PERFORM load_bdc_table_mod USING:
+          ' ' 'KNVV-BZIRK' i_cust_tab-bzirk,
+          ' ' 'KNVV-VKGRP' i_cust_tab-vkgrp,
+          ' ' 'KNVV-VKBUR' i_cust_tab-vkbur,
+          ' ' 'KNVV-KDGRP' i_cust_tab-kdgrp,
+          ' ' 'KNVV-WAERS' i_cust_tab-waers,
+          ' ' 'KNVV-KONDA' i_cust_tab-konda,
+          ' ' 'KNVV-KALKS' i_cust_tab-kalks,
+          ' ' 'KNVV-PLTYP' i_cust_tab-pltyp.
+        ENDIF.
+      ENDIF.
+    ENDIF.
+
+    IF i_cust_tab-ktokd NE '0003'.
+      IF i_cust_tab-ktokd NE '0004'.
+        PERFORM load_bdc_table_mod USING:
+        'X' 'SAPMF02D' '0315',
+        ' ' 'BDC_CURSOR' 'KNVV-VSBED',
+        ' ' 'BDC_OKCODE' '=VW',
+        ' ' 'KNVV-LPRIO' i_cust_tab-lprio,
+        ' ' 'KNVV-KZAZU' i_cust_tab-kzazu,
+        ' ' 'KNVV-VSBED' i_cust_tab-vsbed,
+        ' ' 'KNVV-VWERK' i_cust_tab-vwerk,                 "7031 kcfh423
+        ' ' 'KNVV-AUTLF' i_cust_tab-autlf,                 "7384 kcfh423
+        ' ' 'KNVV-KZTLF' i_cust_tab-kztlf,                 "7384 kcfh423
+        ' ' 'KNVV-ANTLF' i_cust_tab-antlf.
+      ENDIF.
+    ENDIF.
+
+    IF i_cust_tab-ktokd NE '0002'.
+      IF i_cust_tab-ktokd NE '0004'.
+
+        PERFORM load_bdc_table_mod USING:
+        'X' 'SAPMF02D' '0320',
+        ' ' 'BDC_CURSOR' 'KNVV-KTGRD',
+        ' ' 'BDC_OKCODE' '=VW',
+        ' ' 'KNVV-MRNKZ' i_cust_tab-mrnkz,
+        ' ' 'KNVV-BOKRE' i_cust_tab-bokre,
+        ' ' 'KNVV-PRFRE' i_cust_tab-prfre,
+        ' ' 'KNVV-PERFK' i_cust_tab-perfk,                "7384 kcfh423
+        ' ' 'KNVV-PERRL' i_cust_tab-perrl,                "7384 kcfh423
+        ' ' 'KNVV-ZTERM' i_cust_tab-zterma,
+        ' ' 'KNVV-INCO1' i_cust_tab-inco1,
+        ' ' 'KNVV-INCO2' i_cust_tab-inco2,
+        ' ' 'KNVV-KTGRD' i_cust_tab-ktgrd.
+      ENDIF.
+    ENDIF.
+
+    IF i_cust_tab-ktokd NE '0004'.
+
+      PERFORM load_bdc_table_mod USING:
+     'X' 'SAPMF02D' '1350',
+     ' ' 'BDC_CURSOR' 'KNVI-TAXKD(01)',
+     ' ' 'BDC_OKCODE' '=RW',
+     ' ' 'KNVI-TAXKD(01)' i_cust_tab-taxkd.
+
+      IF i_cust_tab-bukrs(2) EQ 'ES'.
+        PERFORM load_bdc_table_mod USING:
+        ' ' 'KNVI-TAXKD(01)' '1'.
+      ENDIF.
+
+      PERFORM load_bdc_table_mod USING:
+      'X' 'SAPMF02D' '1350',
+      ' ' 'BDC_CURSOR' 'RF02D-KUNNR',
+      ' ' 'BDC_OKCODE' '=RW',
+
+      'X' 'SAPMF02D' '1350',
+      ' ' 'BDC_CURSOR' 'RF02D-KUNNR',
+      ' ' 'BDC_OKCODE' '=VW',
+
+      'X' 'SAPMF02D' '0324',
+      ' ' 'BDC_CURSOR' 'KNVP-PARVW(01)',
+      ' ' 'BDC_OKCODE' '=RW',
+
+      'X' 'SAPMF02D' '1350',
+      ' ' 'BDC_CURSOR' 'RF02D-KUNNR',
+      ' ' 'BDC_OKCODE' '=ZUDA',
+
+      'X' 'SAPLV02Z' '0200',
+      ' ' 'BDC_CURSOR' 'KNVV-KVGR5',
+      ' ' 'BDC_OKCODE' '=BACK',
+      ' ' 'KNVV-KVGR1' i_cust_tab-kvgr1,
+      ' ' 'KNVV-KVGR2' i_cust_tab-kvgr2,
+      ' ' 'KNVV-KVGR3' i_cust_tab-kvgr3,
+      ' ' 'KNVV-KVGR4' i_cust_tab-kvgr4,
+      ' ' 'KNVV-KVGR5' i_cust_tab-kvgr5,
+
+      'X' 'SAPMF02D' '1350',
+      ' ' 'BDC_CURSOR' 'RF02D-KUNNR',
+      ' ' 'BDC_OKCODE' '=0510',
+
+      'X' 'SAPMF02D' '0510',
+      ' ' 'BDC_CURSOR' 'KNA1-SPERR',
+      ' ' 'BDC_OKCODE' '=PF03',
+      ' ' 'KNA1-SPERR' i_cust_tab-sperr,
+      ' ' 'KNA1-AUFSD' i_cust_tab-aufsd,
+      ' ' 'KNA1-LIFSD' i_cust_tab-lifsd,
+      ' ' 'KNA1-FAKSD' i_cust_tab-faksd,
+
+      'X' 'SAPMF02D' '1350',
+      ' ' 'BDC_CURSOR' 'RF02D-KUNNR',
+      ' ' 'BDC_OKCODE' '=VW',
+
+      'X' 'SAPMF02D' '0324',
+      ' ' 'BDC_CURSOR' 'KNVP-PARVW(01)',
+      ' ' 'BDC_OKCODE' '=RW',
+
+      'X' 'SAPMF02D' '1350',
+      ' ' 'BDC_CURSOR' 'RF02D-KUNNR',
+      ' ' 'BDC_OKCODE' '=0520',
+
+      'X' 'SAPMF02D' '0520',
+      ' ' 'BDC_CURSOR' 'KNA1-LOEVM',
+      ' ' 'BDC_OKCODE' '=PF03',
+      ' ' 'KNA1-LOEVM' i_cust_tab-loevm.
+
+      IF NOT i_cust_tab-bukrs IS INITIAL.
+        PERFORM load_bdc_table_mod USING:
+        ' ' 'KNB1-LOEVM' i_cust_tab-loevm1.
+      ENDIF.
+
+      IF NOT i_cust_tab-vkorg IS INITIAL AND
+         NOT i_cust_tab-vtweg IS INITIAL AND
+         NOT i_cust_tab-spart IS INITIAL.
+        PERFORM load_bdc_table_mod USING:
+        ' ' 'KNVV-LOEVM' i_cust_tab-loevm2.
+      ENDIF.
+
+      PERFORM load_bdc_table_mod USING:
+
+      'X' 'SAPMF02D' '1350',
+      ' ' 'BDC_CURSOR' 'RF02D-KUNNR',
+      ' ' 'BDC_OKCODE' '=VW',
+
+      'X' 'SAPMF02D' '0324',
+      ' ' 'BDC_CURSOR' 'KNVP-PARVW(01)',
+      ' ' 'BDC_OKCODE' '=VW'.
+
+    ENDIF.
+
+    IF i_cust_tab-ktokd EQ '0004'.
+
+      PERFORM load_bdc_table_mod USING:
+         'X' 'SAPMF02D' '0324',
+         ' ' 'BDC_CURSOR' 'KNVP-PARVW(01)',
+         ' ' 'BDC_OKCODE' '=RW',
+
+         'X' 'SAPMF02D' '0310',
+         ' ' 'BDC_CURSOR' 'RF02D-KUNNR',
+         ' ' 'BDC_OKCODE' '=ZUDA',
+
+        'X' 'SAPLV02Z' '0200',
+         ' ' 'BDC_CURSOR' 'KNVV-KVGR5',
+         ' ' 'BDC_OKCODE' '=BACK',
+         ' ' 'KNVV-KVGR1' i_cust_tab-kvgr1,
+         ' ' 'KNVV-KVGR2' i_cust_tab-kvgr2,
+         ' ' 'KNVV-KVGR3' i_cust_tab-kvgr3,
+         ' ' 'KNVV-KVGR4' i_cust_tab-kvgr4,
+         ' ' 'KNVV-KVGR5' i_cust_tab-kvgr5,
+
+         'X' 'SAPMF02D' '0310',
+         ' ' 'BDC_CURSOR' 'RF02D-KUNNR',
+         ' ' 'BDC_OKCODE' '=0510',
+
+         'X' 'SAPMF02D' '0510',
+         ' ' 'BDC_CURSOR' 'KNA1-SPERR',
+         ' ' 'BDC_OKCODE' '=PF03',
+         ' ' 'KNA1-SPERR' i_cust_tab-sperr,
+         ' ' 'KNA1-AUFSD' i_cust_tab-aufsd,
+         ' ' 'KNA1-LIFSD' i_cust_tab-lifsd,
+         ' ' 'KNA1-FAKSD' i_cust_tab-faksd,
+
+         'X' 'SAPMF02D' '0310',
+         ' ' 'BDC_CURSOR' 'RF02D-KUNNR',
+         ' ' 'BDC_OKCODE' '=VW',
+
+         'X' 'SAPMF02D' '0324',
+         ' ' 'BDC_CURSOR' 'KNVP-PARVW(01)',
+         ' ' 'BDC_OKCODE' '=RW',
+
+         'X' 'SAPMF02D' '0310',
+         ' ' 'BDC_CURSOR' 'RF02D-KUNNR',
+         ' ' 'BDC_OKCODE' '=0520',
+
+         'X' 'SAPMF02D' '0520',
+         ' ' 'BDC_CURSOR' 'KNA1-LOEVM',
+         ' ' 'BDC_OKCODE' '=PF03',
+         ' ' 'KNA1-LOEVM' i_cust_tab-loevm.
+
+      IF NOT i_cust_tab-bukrs IS INITIAL.
+        PERFORM load_bdc_table_mod USING:
+        ' ' 'KNB1-LOEVM' i_cust_tab-loevm1.
+      ENDIF.
+
+      IF NOT i_cust_tab-vkorg IS INITIAL AND
+         NOT i_cust_tab-vtweg IS INITIAL AND
+         NOT i_cust_tab-spart IS INITIAL.
+        PERFORM load_bdc_table_mod USING:
+        ' ' 'KNVV-LOEVM' i_cust_tab-loevm2.
+      ENDIF.
+
+      PERFORM load_bdc_table_mod USING:
+      'X' 'SAPMF02D' '0310',
+      ' ' 'BDC_CURSOR' 'RF02D-KUNNR',
+      ' ' 'BDC_OKCODE' '=VW',
+
+      'X' 'SAPMF02D' '0324',
+      ' ' 'BDC_CURSOR' 'KNVP-PARVW(01)',
+      ' ' 'BDC_OKCODE' '=VW'.
+    ENDIF.
+  ENDIF.
+
+ENDFORM.                    " generate_bdc_change
+* <<< End of modification KCFH423 CCL7031 EU1K925839  03/04/2007
+*&---------------------------------------------------------------------*
+*&      Form  load_bdc_table
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  PB_BDCBEGIN                                                    *
+*  -->  PS_SCREEN_NAME                                                 *
+*  -->  PS_SCREEN_VALUE                                                *
+*----------------------------------------------------------------------*
+FORM load_bdc_table USING pb_bdcbegin
+                          ps_screen_name
+                          ps_screen_value.
+  CLEAR bdc_tab.                       "Clear BDC table header
+  IF pb_bdcbegin = 'X'.
+    MOVE ps_screen_name TO bdc_tab-program.
+    MOVE ps_screen_value TO bdc_tab-dynpro.
+    MOVE 'X' TO bdc_tab-dynbegin.
+    APPEND bdc_tab.
+  ELSE.
+    MOVE ps_screen_name TO bdc_tab-fnam.
+    MOVE ps_screen_value TO bdc_tab-fval.
+    APPEND bdc_tab.
+  ENDIF.
+ENDFORM.                    " load_bdc_table
+*&---------------------------------------------------------------------*
+*&      Form  generate_bdc_block
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM generate_bdc_block.
+
+ENDFORM.                    " generate_bdc_block
+*&---------------------------------------------------------------------*
+*&      Form  duplicate_check
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM duplicate_check.
+
+  IF NOT i_cust_tab[] IS INITIAL.
+    LOOP AT i_cust_tab.
+      MOVE-CORRESPONDING i_cust_tab TO i_excel_dupl.
+      APPEND i_excel_dupl.
+    ENDLOOP.
+
+* Check for Duplicate entries in spreadsheet
+    PERFORM duplicate_check_spreadsheet.
+
+* Check for Duplicate entries in database
+    PERFORM duplicate_check_sap.
+  ENDIF.
+
+ENDFORM.                    " duplicate_check
+
+*&---------------------------------------------------------------------*
+*&      Form  duplicate_check_spreadsheet
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM duplicate_check_spreadsheet.
+*  DATA: l_count TYPE i,
+   DATA: l_name(70) TYPE c,
+*         l_flag TYPE i,
+*         l_blank TYPE i,
+          l_idx LIKE sy-tabix,
+          l_rowno LIKE syst-tabix,
+          l_rowno1 LIKE syst-tabix.
+
+
+  LOOP AT i_cust_tab.
+
+    CONCATENATE i_cust_tab-name1
+                i_cust_tab-name2
+                INTO l_name
+                SEPARATED BY space.
+
+    l_rowno = sy-tabix.
+
+
+
+* Populate the final internal table with bank details.
+
+    LOOP AT i_excel_dupl WHERE bankn EQ i_cust_tab-bankn AND
+                               bankl EQ i_cust_tab-bankl.
+
+      l_rowno1 = sy-tabix.
+
+      IF l_rowno NE l_rowno1.
+
+        READ TABLE i_final1 WITH KEY rowno1 = l_rowno1
+                                     rowno = l_rowno.
+        IF sy-subrc = 0.
+          CLEAR i_final1.
+          CONTINUE.
+        ENDIF.
+        i_final1-rowno = l_rowno.
+        i_final1-rowno1 = l_rowno1.
+        i_final1-name = l_name.
+        i_final1-bankn = i_excel_dupl-bankn.
+        i_final1-bankl = i_excel_dupl-bankl.
+        i_final1-row1 = l_rowno.
+        i_final1-row2 = l_rowno1.
+        i_final1-text = text-021.
+        APPEND i_final1.
+        CLEAR i_final1.
+      ENDIF.
+    ENDLOOP.
+
+    CLEAR : l_rowno1.
+
+
+    LOOP AT i_excel_dupl WHERE stceg EQ i_cust_tab-stceg AND
+                               stceg NE space.
+
+      l_rowno1 = sy-tabix.
+      IF l_rowno NE l_rowno1.
+
+        READ TABLE i_final1 WITH KEY rowno1 = l_rowno1
+                                     rowno = l_rowno.
+        l_idx = sy-tabix.
+*        IF sy-subrc EQ 0.
+
+* It means that this row has both bank data and vat common
+*          i_final1-stceg = i_excel_dupl-stceg.
+*          CONCATENATE text-022 i_final1-text INTO i_final1-text
+*SEPARATED BY ','.
+*          MODIFY i_final1 INDEX l_idx.
+*        ELSE.
+*  This means only vat reg no is common
+        i_final1-rowno = l_rowno.
+        i_final1-rowno1 = l_rowno1.
+        i_final1-name = l_name.
+        i_final1-stceg = i_excel_dupl-stceg.
+*          IF l_rowno < l_rowno1.
+        i_final1-row1 = l_rowno.
+        i_final1-row2 = l_rowno1.
+*          ELSE.
+*            i_final1-row1 = l_rowno1.
+*            i_final1-row2 = l_rowno.
+        CONCATENATE text-022 i_final1-text INTO i_final1-text
+SEPARATED BY ','.
+
+*          ENDIF.
+        APPEND i_final1.
+*        ENDIF.
+        CLEAR i_final1.
+      ENDIF.
+    ENDLOOP.
+
+    LOOP AT i_excel_dupl WHERE pstlz EQ i_cust_tab-pstlz AND
+                            pstlz NE space.
+      l_rowno1 = sy-tabix.
+
+      IF l_rowno NE l_rowno1.
+        READ TABLE i_final1 WITH KEY rowno1 = l_rowno1
+                                     rowno = l_rowno.
+        l_idx = sy-tabix.
+*        IF sy-subrc EQ 0.
+* It means that this row has bank data, vat & post code common
+
+*          i_final1-pstlz = i_excel_dupl-pstlz.
+*          CONCATENATE text-023 i_final1-text INTO i_final1-text
+*SEPARATED BY ','.
+*          MODIFY i_final1 INDEX l_idx.
+*        ELSE.
+* This means only post code is common
+        i_final1-rowno = l_rowno.
+        i_final1-rowno1 = l_rowno1.
+        i_final1-name = l_name.
+        i_final1-pstlz = i_excel_dupl-pstlz.
+*          IF l_rowno < l_rowno1.
+        i_final1-row1 = l_rowno.
+        i_final1-row2 = l_rowno1.
+*          ELSE.
+*            i_final1-row1 = l_rowno1.
+*            i_final1-row2 = l_rowno.
+        CONCATENATE text-023 i_final1-text INTO i_final1-text
+SEPARATED BY ','.
+*          ENDIF.
+        APPEND i_final1.
+*        ENDIF.
+        CLEAR i_final1.
+      ENDIF.
+    ENDLOOP.
+
+  ENDLOOP.
+
+  SORT i_final1 BY rowno row1 row2.
+  DELETE ADJACENT DUPLICATES FROM i_final1 COMPARING row1 row2.
+  SORT i_final1 BY rowno row1 row2.
+
+ENDFORM.                    " duplicate_check_spreadsheet
+*&---------------------------------------------------------------------*
+*&      Form  duplicate_check_sap
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM duplicate_check_sap.
+
+*  DATA: l_idx LIKE sy-tabix,
+   DATA: l_flag TYPE i,
+          l_name(70) TYPE c.
+*          l_check TYPE i.
+*          l_blank TYPE i.
+
+  DATA: l_rowno LIKE syst-tabix.
+
+  DATA: BEGIN OF li_bank OCCURS 0,
+          kunnr  LIKE kna1-kunnr,
+          bankn  LIKE knbk-bankn,
+          bankl  LIKE knbk-bankl,
+        END OF li_bank.
+
+  DATA: BEGIN OF li_post OCCURS 0,
+          kunnr LIKE kna1-kunnr,
+          pstlz  LIKE kna1-pstlz,
+        END OF li_post.
+
+  DATA: BEGIN OF li_vat OCCURS 0,
+          kunnr LIKE kna1-kunnr,
+          stceg  LIKE kna1-stceg,
+        END OF li_vat.
+
+* Populate first internal table with same bank information
+
+  SELECT kunnr bankn bankl
+         INTO TABLE li_bank
+         FROM knbk
+         FOR ALL ENTRIES IN i_cust_tab
+         WHERE bankl EQ i_cust_tab-bankl AND
+               bankl NE space AND
+               bankn EQ i_cust_tab-bankn AND
+               bankn NE space.
+
+* Populate second internal table with same postal code
+
+  SELECT kunnr pstlz
+           INTO TABLE li_post
+           FROM kna1
+           FOR ALL ENTRIES IN i_cust_tab
+           WHERE pstlz EQ i_cust_tab-pstlz AND
+                 pstlz NE space.
+
+
+* Populate third internal table with same vat reg no
+
+  SELECT kunnr stceg
+         INTO TABLE li_vat
+         FROM kna1
+         FOR ALL ENTRIES IN i_cust_tab
+         WHERE stceg EQ i_cust_tab-stceg AND
+               stceg NE space.
+
+
+  LOOP AT i_cust_tab.
+
+    CLEAR l_flag.
+    CONCATENATE i_cust_tab-name1
+                i_cust_tab-name2
+                INTO l_name
+                SEPARATED BY space.
+
+
+    l_rowno = sy-tabix.
+
+    LOOP AT li_bank WHERE
+              bankl = i_cust_tab-bankl AND
+              bankn = i_cust_tab-bankn.
+
+      i_final-name = l_name.
+      i_final-rowno  = l_rowno.
+      i_final-kunnr = li_bank-kunnr.
+      i_final-bankl = li_bank-bankl.
+      i_final-bankn = li_bank-bankn.
+*      l_flag = l_flag + 1.
+      APPEND i_final.
+      CLEAR i_final.
+
+    ENDLOOP.
+
+    LOOP AT li_vat WHERE stceg = i_cust_tab-stceg.
+      READ TABLE i_final WITH KEY kunnr = li_vat-kunnr.
+
+*      l_idx = sy-tabix.
+*      IF sy-subrc EQ 0.
+** It means that this row has both bank data and vat common
+*        i_final-stceg = li_vat-stceg.
+*        MODIFY i_final INDEX l_idx.
+*      ELSE.
+* This means only vat reg no is common
+      i_final-name = l_name.
+      i_final-rowno  = l_rowno.
+      i_final-kunnr = li_vat-kunnr.
+      i_final-stceg = li_vat-stceg.
+      APPEND i_final.
+
+*      ENDIF.
+      CLEAR i_final.
+    ENDLOOP.
+
+    LOOP AT li_post WHERE pstlz = i_cust_tab-pstlz.
+
+      READ TABLE i_final WITH KEY kunnr = li_post-kunnr.
+*
+*        l_idx = sy-tabix.
+*        IF sy-subrc EQ 0.
+** It means that this row has bank data, vat & post code common
+*          i_final-pstlz = li_post-pstlz.
+*          MODIFY i_final INDEX l_idx.
+*        ELSE.
+* Only post code is common
+      i_final-name = l_name.
+      i_final-rowno  = l_rowno.
+      i_final-kunnr = li_post-kunnr.
+      i_final-pstlz = li_post-pstlz.
+      APPEND i_final.
+*        ENDIF.
+      CLEAR i_final.
+    ENDLOOP.
+
+  ENDLOOP.
+
+  SORT i_final BY rowno kunnr DESCENDING.
+  DELETE ADJACENT DUPLICATES FROM i_final COMPARING rowno kunnr.
+
+ENDFORM.                    " duplicate_check_sap
+*&---------------------------------------------------------------------*
+*&      Form  write_duplicate_check_result
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM write_duplicate_check_result.
+
+  NEW-PAGE.
+
+  WRITE:/ text-005.
+
+  SKIP.
+  PERFORM display_text.
+  SKIP.
+  IF i_final1[] IS INITIAL.
+    FORMAT COLOR COL_POSITIVE ON.
+
+    WRITE:/  text-006.
+
+    FORMAT COLOR COL_POSITIVE OFF.
+
+  ELSE.
+    FORMAT COLOR COL_HEADING ON.
+
+    ULINE: /01(110).
+    WRITE: /01  sy-vline,
+              02  text-007,
+              21  sy-vline,
+              22  text-008,
+              92  sy-vline,
+              93  text-009,
+              110  sy-vline.
+*              111 text-020,
+*              145 sy-vline.
+
+    ULINE: /01(110).
+
+    FORMAT COLOR COL_HEADING OFF.
+
+    LOOP AT i_final1.
+
+      WRITE: /01  sy-vline,
+              02  i_final1-rowno,
+              21  sy-vline,
+              22  i_final1-name,
+              92  sy-vline,
+              93  i_final1-row1,
+              99  'AND',
+              105 i_final1-row2,
+              110 sy-vline.
+*              111 i_final1-text,
+*              145  sy-vline.
+
+    ENDLOOP.
+    ULINE: /01(110).
+
+  ENDIF.
+
+  SKIP.
+
+*  NEW-PAGE.
+
+  WRITE:/ text-010.
+
+  SKIP.
+  PERFORM display_text.
+  SKIP.
+  IF i_final[] IS INITIAL.
+    FORMAT COLOR COL_POSITIVE ON.
+    WRITE:/  text-011.
+    FORMAT COLOR COL_POSITIVE OFF.
+
+  ELSE.
+    FORMAT COLOR COL_HEADING ON.
+
+    ULINE: /01(110).
+    WRITE: /01  sy-vline,
+              02  text-007,
+              21  sy-vline,
+              22 text-008,
+              91 sy-vline,
+              92 text-016,
+              110  sy-vline.
+
+    ULINE: /01(110).
+
+    FORMAT COLOR COL_HEADING OFF.
+
+
+    LOOP AT i_final.
+
+      WRITE: /01  sy-vline,
+              02  i_final-rowno,
+              21  sy-vline,
+              22  i_final-name,
+              91  sy-vline,
+              92  i_final-kunnr,
+              110  sy-vline.
+
+    ENDLOOP.
+    ULINE: /01(110).
+  ENDIF.
+
+  SKIP.
+
+
+ENDFORM.                    " write_duplicate_check_result
+*&---------------------------------------------------------------------*
+*&      Form  display_text
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM display_text.
+
+  DATA l_text(20).
+
+  FORMAT INTENSIFIED ON.
+
+  WRITE: / text-012.
+
+  FORMAT INTENSIFIED OFF.
+
+  l_text = text-013.
+  WRITE: /07 l_text.
+
+  l_text = text-014.
+  WRITE: /07 l_text.
+
+  l_text = text-015.
+  WRITE: /07 l_text.
+
+ENDFORM.                    " display_text
+*&---------------------------------------------------------------------*
+*&      Form  write_report
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM write_report.
+
+  IF w_count GT 0.
+    ULINE.
+    w_count = 0.
+  ENDIF.
+
+* Duplicate Legacy Customer Records
+  FORMAT COLOR COL_NEGATIVE.
+  LOOP AT i_results_tab WHERE error_type EQ '3'.
+    ADD 1 TO w_count.
+    IF w_count EQ 1.
+      WRITE:/   text-s07.
+      ULINE.
+    ENDIF.
+    WRITE:/ i_results_tab-text  UNDER text-s02,
+            i_results_tab-kunnr UNDER text-s03.
+  ENDLOOP.
+  IF w_count GT 0.
+    ULINE.
+    w_count = 0.
+  ENDIF.
+
+* Errors caught by Call Transaction
+  FORMAT COLOR COL_GROUP.
+  LOOP AT i_results_tab WHERE error_type EQ '2'.
+    ADD 1 TO w_count.
+    IF w_count EQ 1.
+      WRITE:/   text-s06.
+      ULINE.
+    ENDIF.
+    IF i_results_tab-text CS 'BANK'.
+      i_results_tab-text = 'Bank does not exist/or bank data incorrect'.
+    ENDIF.
+    WRITE:/ i_results_tab-text  UNDER text-s02,
+            i_results_tab-kunnr UNDER text-s03.
+  ENDLOOP.
+  IF w_count GT 0.
+    ULINE.
+    w_count = 0.
+  ENDIF.
+  IF  w_bdc_created = 'Y'.
+    IF NOT p_create IS INITIAL.
+      WRITE:/ 'Process the Session :' ,p_bdccr.
+    ELSE.
+      WRITE:/ 'Process the Session :' ,p_bdcch.
+    ENDIF.
+  ENDIF.
+
+* Successes
+  FORMAT COLOR COL_KEY.
+  LOOP AT i_results_tab WHERE error_type EQ '0'.
+    ADD 1 TO w_count.
+    IF w_count EQ 1.
+      WRITE:/   text-s01.
+      WRITE:/   text-s02,
+            100 text-s03.
+      ULINE.
+    ENDIF.
+    WRITE:/ i_results_tab-text  UNDER text-s02,
+            i_results_tab-kunnr UNDER text-s03.
+  ENDLOOP.
+
+  INCLUDE zsuteosi.
+
+ENDFORM.                    " write_report
+*&---------------------------------------------------------------------*
+*&      Form  file_validations
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM file_validations.
+
+  IF NOT p_create IS INITIAL AND NOT p_upload IS INITIAL.
+
+    PERFORM create_val.
+
+  ELSEIF NOT p_change IS INITIAL AND NOT p_upload IS INITIAL.
+
+    PERFORM change_val.
+
+  ENDIF.
+ENDFORM.                    " file_validations
+*&---------------------------------------------------------------------*
+*&      Form  create_val
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM create_val.
+  IF i_results_tab[] IS INITIAL.
+
+
+   DATA: li_zv1311110 TYPE STANDARD TABLE OF zv1311110 WITH HEADER LINE.
+
+    SELECT * FROM zv1311110
+    INTO TABLE li_zv1311110
+    FOR ALL ENTRIES IN i_cust_tab
+    WHERE bukrs EQ i_cust_tab-bukrs
+    AND   rmode EQ '1'.
+
+    IF NOT li_zv1311110[] IS INITIAL.
+
+      READ TABLE li_zv1311110 WITH KEY rmode = '1'.
+
+*    Validation for Ops Source
+
+      LOOP AT i_cust_tab.
+        IF NOT li_zv1311110-katr1 IS INITIAL.
+*        IF i_cust_tab-bukrs(2) IN r_land1.
+          IF i_cust_tab-katr1 IS INITIAL.
+
+            CONCATENATE text-018 i_cust_tab-bukrs(2) INTO
+                           i_results_tab-text SEPARATED BY space.
+            i_results_tab-error_type = '3'.
+            APPEND i_results_tab.
+          ENDIF.
+*        ENDIF.
+        ENDIF.
+*     Validation for Sales District
+        IF NOT li_zv1311110-bzirk IS INITIAL.
+          IF i_cust_tab-bzirk IS INITIAL.
+
+            CONCATENATE text-019 i_cust_tab-bukrs(2) INTO
+                             i_results_tab-text SEPARATED BY space.
+
+            i_results_tab-error_type = '3'.
+
+            APPEND i_results_tab.
+          ENDIF.
+        ENDIF.
+      ENDLOOP.
+    ENDIF.
+  ENDIF.
+
+*   Validation for Country
+  LOOP AT i_cust_tab.
+    IF NOT i_cust_tab-bukrs IS INITIAL.
+      IF NOT i_cust_tab-bukrs(2) IN r_country.
+
+        CONCATENATE text-026 i_cust_tab-bukrs(2) INTO
+                                  i_results_tab-text SEPARATED BY space.
+        i_results_tab-error_type = '3'.
+        APPEND i_results_tab.
+      ENDIF.
+
+    ELSEIF NOT i_cust_tab-vkorg IS INITIAL.
+      IF NOT i_cust_tab-vkorg(2) IN r_country.
+
+        CONCATENATE text-026 i_cust_tab-vkorg(2) INTO
+                                  i_results_tab-text SEPARATED BY space.
+        i_results_tab-error_type = '3'.
+        APPEND i_results_tab.
+      ENDIF.
+    ENDIF.
+  ENDLOOP.
+
+ENDFORM.                    " create_val
+*&---------------------------------------------------------------------*
+*&      Form  change_val
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM change_val.
+  IF i_results_tab[] IS INITIAL.
+
+   DATA: li_zv1311110 TYPE STANDARD TABLE OF zv1311110 WITH HEADER LINE.
+
+    SELECT * FROM zv1311110
+    INTO TABLE li_zv1311110
+    FOR ALL ENTRIES IN i_cust_tab
+    WHERE bukrs EQ i_cust_tab-bukrs
+    AND   rmode EQ '2'.
+
+    IF NOT li_zv1311110[] IS INITIAL.
+
+      READ TABLE li_zv1311110 WITH KEY rmode = '2'.
+
+
+      LOOP AT i_cust_tab.
+        IF NOT li_zv1311110-katr1 IS INITIAL.
+          IF i_cust_tab-bukrs(2) IN r_land1.
+            IF i_cust_tab-katr1 IS INITIAL.
+
+              CONCATENATE text-018 i_cust_tab-bukrs(2) INTO
+                             i_results_tab-text SEPARATED BY space.
+              i_results_tab-error_type = '3'.
+              APPEND i_results_tab.
+            ENDIF.
+          ENDIF.
+        ENDIF.
+
+        IF NOT li_zv1311110-bzirk IS INITIAL.
+          IF i_cust_tab-bzirk IS INITIAL.
+
+            CONCATENATE text-019 i_cust_tab-bukrs(2) INTO
+                             i_results_tab-text SEPARATED BY space.
+
+            i_results_tab-error_type = '3'.
+
+            APPEND i_results_tab.
+          ENDIF.
+        ENDIF.
+        IF i_cust_tab-katr1 IS INITIAL AND i_cust_tab-bzirk IS INITIAL
+  .
+          CONCATENATE text-018 i_cust_tab-bukrs(2) 'AND' text-019 INTO
+           i_results_tab-text SEPARATED BY space.
+        ENDIF.
+      ENDLOOP.
+    ENDIF.
+  ENDIF.
+
+ENDFORM.                    " change_val
+*&---------------------------------------------------------------------*
+*&      Form  load_bdc_table_mod
+*&---------------------------------------------------------------------*
+FORM load_bdc_table_mod USING pi_bdcbegin      TYPE c
+                             pi_screen_name
+                             pi_screen_value.
+
+  CONSTANTS:
+   lc_mark         TYPE c            VALUE 'X'.
+
+* if the field is blank, do not save into BDC table
+  IF NOT pi_screen_value IS INITIAL.
+
+* if the value of the field is '~', then the field value should be blank
+    IF pi_screen_value EQ p_cchar.
+      CLEAR pi_screen_value.
+    ENDIF.
+    CLEAR bdc_tab.                       "Clear BDC table header
+    IF pi_bdcbegin EQ lc_mark.
+      MOVE pi_screen_name TO bdc_tab-program.
+      MOVE pi_screen_value TO bdc_tab-dynpro.
+      MOVE lc_mark TO bdc_tab-dynbegin.
+      APPEND bdc_tab.
+    ELSE.
+      MOVE pi_screen_name TO bdc_tab-fnam.
+      MOVE pi_screen_value TO bdc_tab-fval.
+      APPEND bdc_tab.
+    ENDIF.
+  ENDIF.
+
+ENDFORM.                    " load_bdc_table_mod

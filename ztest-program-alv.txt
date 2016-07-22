@@ -1,0 +1,379 @@
+*&---------------------------------------------------------------------*
+*& Report  ZTEST_PROGRAM_ALV                      	                *
+*&                                                                     *
+*&---------------------------------------------------------------------*
+*&                                                                     *
+*&                                                                     *
+*&---------------------------------------------------------------------*
+
+REPORT  ZTEST_PROGRAM_ALV                         .
+
+TABLES: ekko.
+
+TYPE-POOLS: slis.
+
+DATA: t_fieldcat TYPE slis_t_fieldcat_alv WITH HEADER LINE.
+
+DATA: t_events TYPE slis_t_event WITH HEADER LINE.
+
+DATA: t_top_of_page TYPE slis_t_listheader WITH HEADER LINE.
+
+DATA: wa_keyinfo TYPE slis_keyinfo_alv.
+
+DATA: wa_variant LIKE disvariant.
+
+***********************************************************************
+
+DATA: BEGIN OF t_ekko OCCURS 0,
+        ebeln LIKE ekko-ebeln,
+        ekorg LIKE ekko-ekorg,
+        aedat LIKE ekko-aedat,
+        lifnr LIKE ekko-lifnr,
+      END OF t_ekko.
+
+DATA: BEGIN OF t_ekpo OCCURS 0,
+        ebeln LIKE ekpo-ebeln,
+        ebelp LIKE ekpo-ebelp,
+        werks LIKE ekpo-werks,
+        txz01 LIKE ekpo-txz01,
+        matnr LIKE ekpo-matnr,
+        menge LIKE ekpo-menge,
+      END OF t_ekpo.
+
+DATA: BEGIN OF t_output OCCURS 0,
+        ebeln LIKE ekko-ebeln,
+        ekorg LIKE ekko-ekorg,
+        aedat LIKE ekko-aedat,
+        lifnr LIKE ekko-lifnr,
+        ebelp LIKE ekpo-ebelp,
+        werks LIKE ekpo-werks,
+        txz01 LIKE ekpo-txz01,
+        matnr LIKE ekpo-matnr,
+        menge LIKE ekpo-menge,
+      END OF t_output.
+
+***********************************************************************
+* selection-screen
+
+SELECTION-SCREEN:BEGIN OF BLOCK b1 WITH FRAME TITLE text-t01.
+SELECT-OPTIONS:
+s_ekorg FOR ekko-ekorg OBLIGATORY,
+s_ebeln FOR ekko-ebeln,
+s_aedat FOR ekko-aedat OBLIGATORY.
+PARAMETERS:p_var LIKE disvariant-variant.
+
+
+PARAMETERS:
+p_a1 RADIOBUTTON GROUP g1,
+p_a2 RADIOBUTTON GROUP g1,
+p_a3 RADIOBUTTON GROUP g1.
+
+SELECTION-SCREEN: END OF BLOCK b1.
+
+***********************************************************************
+
+* selection screen validation
+AT SELECTION-SCREEN ON s_ekorg.
+
+  SELECT SINGLE *
+    FROM ekko
+    WHERE ekorg IN s_ekorg.
+  IF sy-subrc NE 0.
+    MESSAGE e015(z001).
+  ENDIF.
+
+*AT SELECTION-SCREEN ON VALUE-REQUEST FOR p_var.
+** to display all the possible for p_var
+*  PERFORM get_f4.
+
+***********************************************************************
+
+START-OF-SELECTION.
+
+  PERFORM get_data.
+
+***********************************************************************
+
+END-OF-SELECTION.
+
+  IF p_a1 = 'X'.
+
+    PERFORM create_fieldcatalog.
+
+    PERFORM grid_output.
+
+  ELSEIF p_a2 = 'X'.
+
+    PERFORM create_fieldcatalog.
+
+    PERFORM list_display.
+
+  ELSE.
+
+    PERFORM build_fieldcatalog.
+
+    PERFORM hierarchical_display.
+
+  ENDIF.
+
+*&--------------------------------------------------------------------*
+*&      Form  get_data
+*&--------------------------------------------------------------------*
+
+FORM get_data .
+
+  SELECT ebeln ekorg aedat lifnr
+    FROM ekko
+    INTO TABLE t_ekko
+    WHERE ebeln IN s_ebeln
+      AND ekorg IN s_ekorg
+      AND aedat IN s_aedat.
+
+  IF NOT t_ekko[] IS INITIAL.
+    SELECT ebeln ebelp werks
+           txz01 matnr menge
+      FROM ekpo
+      INTO TABLE t_ekpo
+      FOR ALL ENTRIES IN t_ekko
+      WHERE ebeln = t_ekko-ebeln.
+  ENDIF.
+
+  LOOP AT t_ekpo.
+
+    MOVE: t_ekpo-ebelp TO t_output-ebelp,
+          t_ekpo-werks TO t_output-werks,
+          t_ekpo-txz01 TO t_output-txz01,
+          t_ekpo-matnr TO t_output-matnr,
+          t_ekpo-menge TO t_output-menge.
+
+    CLEAR t_ekko.
+    READ TABLE t_ekko WITH KEY ebeln = t_ekpo-ebeln.
+    IF sy-subrc = 0.
+      MOVE : t_ekko-ebeln TO t_output-ebeln,
+             t_ekko-ekorg TO t_output-ekorg,
+             t_ekko-aedat TO t_output-aedat,
+             t_ekko-lifnr TO t_output-lifnr.
+    ENDIF.
+
+    APPEND t_output.
+    CLEAR t_output.
+
+  ENDLOOP.
+
+ENDFORM.                    " get_data
+*&--------------------------------------------------------------------*
+*&      Form  grid_output
+*&--------------------------------------------------------------------*
+
+FORM grid_output.
+
+  CALL FUNCTION 'REUSE_ALV_GRID_DISPLAY'
+ EXPORTING
+*   I_INTERFACE_CHECK                 = ' '
+*   I_BYPASSING_BUFFER                = ' '
+*   I_BUFFER_ACTIVE                   = ' '
+     i_callback_program                = 'ZTEST_PROGRAM_ALV'
+*   I_CALLBACK_PF_STATUS_SET          = ' '
+*   I_CALLBACK_USER_COMMAND           = ' '
+*   I_CALLBACK_TOP_OF_PAGE            = ' '
+*   I_CALLBACK_HTML_TOP_OF_PAGE       = ' '
+*   I_CALLBACK_HTML_END_OF_LIST       = ' '
+*   I_STRUCTURE_NAME                  =
+*   I_BACKGROUND_ID                   = ' '
+*   I_GRID_TITLE                      =
+*   I_GRID_SETTINGS                   =
+*   IS_LAYOUT                         =
+     it_fieldcat                       = t_fieldcat[]
+*   IT_EXCLUDING                      =
+*   IT_SPECIAL_GROUPS                 =
+*   IT_SORT                           =
+*   IT_FILTER                         =
+*   IS_SEL_HIDE                       =
+*   I_DEFAULT                         = 'X'
+*   i_save                            = 'X'
+*   is_variant                        = wa_variant
+*   IT_EVENTS                         =
+*   IT_EVENT_EXIT                     =
+*   IS_PRINT                          =
+*   IS_REPREP_ID                      =
+*   I_SCREEN_START_COLUMN             = 0
+*   I_SCREEN_START_LINE               = 0
+*   I_SCREEN_END_COLUMN               = 0
+*   I_SCREEN_END_LINE                 = 0
+*   IT_ALV_GRAPHICS                   =
+*   IT_HYPERLINK                      =
+*   IT_ADD_FIELDCAT                   =
+*   IT_EXCEPT_QINFO                   =
+*   I_HTML_HEIGHT_TOP                 =
+*   I_HTML_HEIGHT_END                 =
+* IMPORTING
+*   E_EXIT_CAUSED_BY_CALLER           =
+*   ES_EXIT_CAUSED_BY_USER            =
+    TABLES
+      t_outtab                          = t_output
+   EXCEPTIONS
+     program_error                     = 1
+     OTHERS                            = 2.
+  IF sy-subrc <> 0.
+    MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
+            WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+  ENDIF.
+
+ENDFORM.                    " grid_output
+*&---------------------------------------------------------------------*
+*&      Form  create_fieldcatalog
+*&---------------------------------------------------------------------*
+
+FORM create_fieldcatalog .
+
+  CALL FUNCTION 'REUSE_ALV_FIELDCATALOG_MERGE'
+EXPORTING
+     i_program_name               = 'ZTEST_PROGRAM_ALV'
+     i_internal_tabname           = 'T_OUTPUT'
+*   I_STRUCTURE_NAME             =
+*   I_CLIENT_NEVER_DISPLAY       = 'X'
+     i_inclname                   = 'ZTEST_PROGRAM_ALV'
+*   I_BYPASSING_BUFFER           =
+*   I_BUFFER_ACTIVE              =
+    CHANGING
+      ct_fieldcat                  = t_fieldcat[]
+   EXCEPTIONS
+     inconsistent_interface       = 1
+     program_error                = 2
+     OTHERS                       = 3
+            .
+  IF sy-subrc <> 0.
+    MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
+            WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+  ENDIF.
+
+ENDFORM.                    " create_fieldcatalog
+*&--------------------------------------------------------------------*
+*&      Form  list_display
+*&--------------------------------------------------------------------*
+
+FORM list_display .
+
+  CALL FUNCTION 'REUSE_ALV_LIST_DISPLAY'
+ EXPORTING
+*   I_INTERFACE_CHECK              = ' '
+*   I_BYPASSING_BUFFER             =
+*   I_BUFFER_ACTIVE                = ' '
+     i_callback_program             = 'ZTEST_PROGRAM_ALV'
+*   I_CALLBACK_PF_STATUS_SET       = ' '
+*   I_CALLBACK_USER_COMMAND        = ' '
+*   I_STRUCTURE_NAME               =
+*   IS_LAYOUT                      =
+     it_fieldcat                    = t_fieldcat[]
+*   IT_EXCLUDING                   =
+*   IT_SPECIAL_GROUPS              =
+*   IT_SORT                        =
+*   IT_FILTER                      =
+*   IS_SEL_HIDE                    =
+*   I_DEFAULT                      = 'X'
+*   I_SAVE                         = ' '
+*   IS_VARIANT                     =
+*   IT_EVENTS                      =
+*   IT_EVENT_EXIT                  =
+*   IS_PRINT                       =
+*   IS_REPREP_ID                   =
+*   I_SCREEN_START_COLUMN          = 0
+*   I_SCREEN_START_LINE            = 0
+*   I_SCREEN_END_COLUMN            = 0
+*   I_SCREEN_END_LINE              = 0
+* IMPORTING
+*   E_EXIT_CAUSED_BY_CALLER        =
+*   ES_EXIT_CAUSED_BY_USER         =
+    TABLES
+      t_outtab                       = t_output
+   EXCEPTIONS
+     program_error                  = 1
+     OTHERS                         = 2
+            .
+  IF sy-subrc <> 0.
+    MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
+            WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+  ENDIF.
+
+ENDFORM.                    " list_display
+*&--------------------------------------------------------------------*
+*&      Form  hierarchical_display
+*&--------------------------------------------------------------------*
+
+FORM hierarchical_display .
+
+  CALL FUNCTION 'REUSE_ALV_HIERSEQ_LIST_DISPLAY'
+    EXPORTING
+*   I_INTERFACE_CHECK              = ' '
+     i_callback_program             = 'ZTEST_PROGRAM_ALV'
+*   I_CALLBACK_PF_STATUS_SET       = ' '
+*   I_CALLBACK_USER_COMMAND        = ' '
+*   IS_LAYOUT                      =
+     it_fieldcat                    = t_fieldcat[]
+*   IT_EXCLUDING                   =
+*   IT_SPECIAL_GROUPS              =
+*   IT_SORT                        =
+*   IT_FILTER                      =
+*   IS_SEL_HIDE                    =
+*   I_SCREEN_START_COLUMN          = 0
+*   I_SCREEN_START_LINE            = 0
+*   I_SCREEN_END_COLUMN            = 0
+*   I_SCREEN_END_LINE              = 0
+   I_DEFAULT                      = 'X'
+   I_SAVE                         = ' '
+*   IS_VARIANT                     =
+*   IT_EVENTS                      =
+*   IT_EVENT_EXIT                  =
+        i_tabname_header               = 'T_EKKO'
+        i_tabname_item                 = 'T_EKPO'
+*   I_STRUCTURE_NAME_HEADER        =
+*   I_STRUCTURE_NAME_ITEM          =
+      is_keyinfo                     = wa_keyinfo
+*   IS_PRINT                       =
+*   IS_REPREP_ID                   =
+*   I_BYPASSING_BUFFER             =
+*   I_BUFFER_ACTIVE                =
+* IMPORTING
+*   E_EXIT_CAUSED_BY_CALLER        =
+*   ES_EXIT_CAUSED_BY_USER         =
+    TABLES
+        t_outtab_header                = t_ekko
+        t_outtab_item                  = t_ekpo
+   EXCEPTIONS
+     program_error                  = 1
+     OTHERS                         = 2
+            .
+  IF sy-subrc <> 0.
+    MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
+            WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+  ENDIF.
+
+ENDFORM.                    " hierarchical_display
+*&--------------------------------------------------------------------*
+*&      Form  build_fieldcatalog
+*&--------------------------------------------------------------------*
+
+FORM build_fieldcatalog .
+
+  CALL FUNCTION 'REUSE_ALV_FIELDCATALOG_MERGE'
+ EXPORTING
+     i_program_name               = 'ZTEST_PROGRAM_ALV'
+     i_internal_tabname           = 'T_EKKO'
+*   I_STRUCTURE_NAME             =
+*   I_CLIENT_NEVER_DISPLAY       = 'X'
+     i_inclname                   = 'ZTEST_PROGRAM_ALV'
+*   I_BYPASSING_BUFFER           =
+*   I_BUFFER_ACTIVE              =
+    CHANGING
+      ct_fieldcat                  = t_fieldcat[]
+   EXCEPTIONS
+     inconsistent_interface       = 1
+     program_error                = 2
+     OTHERS                       = 3
+            .
+  IF sy-subrc <> 0.
+    MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
+            WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+  ENDIF.
+
+ENDFORM.                    " build_fieldcatalog

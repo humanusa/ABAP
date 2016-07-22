@@ -1,0 +1,314 @@
+*&---------------------------------------------------------------------*
+*& Report  Z_DOCU_CREATE_FROM_FILE
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+REPORT  z_docu_create_from_file.
+
+TYPES: BEGIN OF lts_file,
+          id     TYPE doku_id,
+          langu  TYPE sy-langu,
+          object TYPE dokhl-object,
+          dokform
+                 TYPE dokhl-dokform,
+          dokstyle
+                 TYPE dokhl-dokstyle,
+          dokfreles
+                 TYPE dokhl-dokfreles,
+          doklreles
+                 TYPE dokhl-doklreles,
+          masterlang
+                 TYPE dokil-masterlang,
+          txtlines
+                 TYPE dokil-txtlines,
+          devc   TYPE tadir-devclass,
+          text   TYPE tline_tab,
+        END OF lts_file,
+        ltt_file TYPE SORTED TABLE OF lts_file WITH UNIQUE KEY object id langu.
+
+TYPES: tt_objs TYPE STANDARD TABLE OF dokhl.
+TABLES dokhl.
+
+PARAMETERS: tran_req  TYPE tadir-korrnum OBLIGATORY.
+
+PARAMETERS : p_file TYPE char100 OBLIGATORY DEFAULT 'C:\data\docu_sapi_note.xml'.
+
+DATA: wa_file TYPE lts_file,
+      lt_file TYPE ltt_file,
+      l_string_w TYPE string,
+      l_dokhl   TYPE dokhl,
+      l_dokil   TYPE dokil.
+
+DATA: ls_ko200 TYPE ko200,
+      lt_ko200 TYPE STANDARD TABLE OF ko200.
+
+DATA: l_s_tadir TYPE tadir.
+
+ls_ko200-trkorr = tran_req.
+
+PERFORM get_table_from_file USING p_file CHANGING lt_file.
+
+IF lines( lt_file ) > 0.
+  WRITE:/ 'Following documentation are going to be created'.
+  LOOP AT lt_file INTO wa_file.
+
+    SELECT SINGLE * FROM dokhl INTO l_dokhl WHERE id = wa_file-id AND
+      langu = wa_file-langu AND object = wa_file-object.
+
+    IF sy-subrc IS INITIAL.
+      WRITE:/ 'Documentation already exists (will ber skipped):',
+      wa_file-id, wa_file-langu, wa_file-object.
+      CONTINUE.
+    ENDIF.
+
+    WRITE:/ wa_file-id, wa_file-langu, wa_file-object.
+    CLEAR: l_dokhl, l_dokil.
+    MOVE-CORRESPONDING wa_file TO l_dokhl.
+    MOVE-CORRESPONDING wa_file TO l_dokil.
+    l_dokhl-dokversion = l_dokil-version = '0001'.
+    l_dokhl-typ        = l_dokil-typ = 'E'.
+    l_dokhl-dokstate   = l_dokil-dokstate  = 'A'.
+    l_dokhl-dokfuser   = 'SAP'.
+    l_dokhl-dokfdate   = sy-datum.
+    l_dokhl-dokftime   = sy-uzeit.
+* TADIR entry missing, tr_objects_insert missing like
+*LIMU DOCU  CLCL_STCT_SC_IMPORT_BW
+*LIMU DOCU  NARSO_CTC102.
+    IF wa_file-id = 'TX' OR wa_file-id = 'DT'.
+      ls_ko200-pgmid  = 'R3TR'.
+      CASE wa_file-id.
+        WHEN 'TX'.
+          ls_ko200-object = 'DOCT'.
+          ls_ko200-obj_name = wa_file-object.
+        WHEN 'DT'.
+          ls_ko200-object = 'DOCV'.
+          concatenate wa_file-id wa_file-object into ls_ko200-obj_name.
+          CONDENSE ls_ko200-obj_name NO-GAPS.
+      ENDCASE.
+      l_s_tadir-srcsystem = 'SAP'.
+      l_s_tadir-author    = 'SAP'.
+      l_s_tadir-devclass  = wa_file-devc.
+      l_s_tadir-pgmid     = ls_ko200-pgmid.
+      l_s_tadir-object    = ls_ko200-object.
+      l_s_tadir-obj_name  = ls_ko200-obj_name.
+
+      CALL FUNCTION 'TRINT_TADIR_INTERFACE'
+        EXPORTING
+          wi_test_modus       = space
+          wi_tadir_pgmid      = l_s_tadir-pgmid
+          wi_tadir_object     = l_s_tadir-object
+          wi_tadir_obj_name   = l_s_tadir-obj_name
+          wi_tadir_srcsystem  = l_s_tadir-srcsystem      "wi_tadir_korrnum = u_tran
+          wi_tadir_author     = l_s_tadir-author
+          wi_tadir_devclass   = l_s_tadir-devclass
+          wi_tadir_masterlang = l_s_tadir-masterlang
+          wi_set_genflag      = l_s_tadir-genflag
+        EXCEPTIONS
+          error_message       = 1                               "SP03
+          OTHERS              = 2.
+
+      IF sy-subrc <> 0.
+        WRITE:/ 'Problems with TADIR IF', l_s_tadir-obj_name.
+        MESSAGE ID syst-msgid TYPE 'I'  NUMBER syst-msgno
+           WITH syst-msgv1 syst-msgv2 syst-msgv3 syst-msgv4 INTO l_string_w.
+        WRITE:/ l_string_w.
+      ENDIF.
+    ELSE.
+      ls_ko200-pgmid  = 'LIMU'.
+      ls_ko200-object = 'DOCU'.
+      CONCATENATE wa_file-id wa_file-object INTO ls_ko200-obj_name.
+      CONDENSE ls_ko200-obj_name NO-GAPS.
+    ENDIF.
+    INSERT ls_ko200 INTO TABLE lt_ko200.
+
+    CALL FUNCTION 'DOCU_IMP'
+      EXPORTING
+        edokhl   = l_dokhl
+        edokil   = l_dokil
+      TABLES
+        line     = wa_file-text[]
+      EXCEPTIONS
+        ret_code = 1
+        OTHERS   = 2.
+
+    IF sy-subrc <> 0.
+      MESSAGE ID syst-msgid TYPE syst-msgty  NUMBER syst-msgno
+         WITH syst-msgv1 syst-msgv2 syst-msgv3 syst-msgv4 INTO l_string_w.
+      WRITE:/ l_string_w.
+    ENDIF.
+  ENDLOOP.
+
+
+  CALL FUNCTION 'TR_OBJECTS_CHECK'
+    EXPORTING
+      iv_no_show_option       = 'X'
+    TABLES
+      wt_ko200                = lt_ko200
+    EXCEPTIONS
+      cancel_edit_other_error = 1
+      show_only_other_error   = 2
+      OTHERS                  = 3.
+
+  IF sy-subrc <> 0.
+    WRITE:/ 'CTO problems, data can not be saved'.
+    MESSAGE ID syst-msgid TYPE 'I'  NUMBER syst-msgno
+       WITH syst-msgv1 syst-msgv2 syst-msgv3 syst-msgv4 INTO l_string_w.
+    WRITE:/ l_string_w. ROLLBACK WORK. EXIT.
+  ENDIF.
+
+  CALL FUNCTION 'TR_OBJECTS_INSERT'
+    EXPORTING
+      iv_no_show_option       = 'X'
+    TABLES
+      wt_ko200                = lt_ko200
+    EXCEPTIONS
+      cancel_edit_other_error = 1
+      show_only_other_error   = 2
+      OTHERS                  = 3.
+
+  IF sy-subrc <> 0.
+    WRITE:/ 'CTO problems, data can not be saved'.
+    MESSAGE ID syst-msgid TYPE 'I'  NUMBER syst-msgno
+       WITH syst-msgv1 syst-msgv2 syst-msgv3 syst-msgv4 INTO l_string_w.
+    WRITE:/ l_string_w.  ROLLBACK WORK. EXIT.
+  ENDIF.
+* end of variable/list dependent part
+  COMMIT WORK.
+
+ENDIF.
+
+*---------------------------------------------------------------------*
+*       FORM f4_file                                                  *
+*---------------------------------------------------------------------*
+*       ........                                                      *
+*---------------------------------------------------------------------*
+FORM f4_file.
+  DATA: cursf TYPE char30,
+        scr_fields LIKE dynpread OCCURS 1 WITH HEADER LINE,
+        file TYPE string,
+        title TYPE string,
+        mask TYPE string VALUE ',*.xml,*.*.',
+        lt_file TYPE filetable,
+        l_subrc TYPE sy-subrc.
+
+  GET CURSOR FIELD cursf.
+  scr_fields-fieldname = cursf.
+  APPEND scr_fields.
+
+* get the value from the screen
+  CALL FUNCTION 'DYNP_VALUES_READ'
+    EXPORTING
+      dyname     = syst-cprog
+      dynumb     = sy-dynnr
+    TABLES
+      dynpfields = scr_fields
+    EXCEPTIONS
+      OTHERS     = 1.
+
+  IF sy-subrc <> 0.
+    EXIT.
+* MESSAGE ID SY-MSGID TYPE SY-MSGTY NUMBER SY-MSGNO
+*         WITH SY-MSGV1 SY-MSGV2 SY-MSGV3 SY-MSGV4.
+  ENDIF.
+* read the screen value
+  READ TABLE scr_fields INDEX 1.
+  file = scr_fields-fieldvalue.
+* call the module to do the job
+  title = 'Input file with documentation'.
+
+  CALL METHOD cl_gui_frontend_services=>file_open_dialog
+    EXPORTING
+      window_title            = title
+      default_extension       = 'xml'
+      default_filename        = file
+      file_filter             = cl_gui_frontend_services=>filetype_xml
+    CHANGING
+      file_table              = lt_file
+      rc                      = l_subrc
+*     user_action             =
+*     file_encoding           =
+    EXCEPTIONS
+      file_open_dialog_failed = 1
+      cntl_error              = 2
+      error_no_gui            = 3
+      not_supported_by_gui    = 4
+      OTHERS                  = 5.
+
+  IF sy-subrc <> 0.
+    EXIT.
+* MESSAGE ID SY-MSGID TYPE SY-MSGTY NUMBER SY-MSGNO
+*         WITH SY-MSGV1 SY-MSGV2 SY-MSGV3 SY-MSGV4.
+  ENDIF.
+  READ TABLE lt_file INTO file INDEX 1.
+
+*  put the value
+  READ   TABLE scr_fields INDEX 1.
+  scr_fields-fieldvalue = file.
+  MODIFY scr_fields INDEX 1.
+* put the value from the screen
+  CALL FUNCTION 'DYNP_VALUES_UPDATE'
+    EXPORTING
+      dyname     = syst-cprog
+      dynumb     = sy-dynnr
+    TABLES
+      dynpfields = scr_fields
+    EXCEPTIONS
+      OTHERS     = 1.
+
+  IF sy-subrc <> 0.
+    EXIT.
+* MESSAGE ID SY-MSGID TYPE SY-MSGTY NUMBER SY-MSGNO
+*         WITH SY-MSGV1 SY-MSGV2 SY-MSGV3 SY-MSGV4.
+  ENDIF.
+ENDFORM.                    "f4_file
+
+**************************************************************
+AT SELECTION-SCREEN ON VALUE-REQUEST FOR p_file.
+  PERFORM f4_file.
+*&---------------------------------------------------------------------*
+*&      Form  GET_TABLE_FROM_FILE
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*
+*----------------------------------------------------------------------*
+FORM get_table_from_file  USING    ufile TYPE char100
+                          CHANGING pt_docs TYPE ltt_file.
+  DATA: l_file_name TYPE string,
+          ls_file(1000) TYPE x,
+          lt_file LIKE TABLE OF ls_file,
+          wa TYPE xstring.
+
+  FIELD-SYMBOLS: <fs> TYPE string.
+
+  l_file_name = ufile.
+  CALL METHOD cl_gui_frontend_services=>gui_upload
+    EXPORTING
+      filename = l_file_name
+      filetype = 'BIN'
+                                                                                                              "bin_filesize = l_len
+    CHANGING
+      data_tab = lt_file
+    EXCEPTIONS
+      OTHERS   = 1.
+
+  IF sy-subrc <> 0.
+    MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno WITH
+     sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+    EXIT.
+  ENDIF.
+  CHECK lines( lt_file ) > 0.
+  LOOP AT lt_file INTO ls_file.
+    IF wa IS INITIAL.
+      wa = ls_file.
+    ELSE.
+      CONCATENATE wa ls_file INTO wa IN BYTE MODE.
+    ENDIF.
+  ENDLOOP.
+  "IMPORT instances TO pt_docs FROM DATA BUFFER wa.
+  CALL TRANSFORMATION id SOURCE XML wa RESULT instances = pt_docs.
+
+ENDFORM.                    " GET_TABLE_FROM_FILE

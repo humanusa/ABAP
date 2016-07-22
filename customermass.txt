@@ -1,0 +1,129 @@
+REPORT zv1311110 NO STANDARD PAGE HEADING
+                 LINE-COUNT 65
+                 LINE-SIZE 182
+                 MESSAGE-ID z0.
+
+*-----------------------------------------------------------------------
+* Include for Global Data
+*-----------------------------------------------------------------------
+INCLUDE zv1311110_top.
+
+*-----------------------------------------------------------------------
+* Select options / Parameters
+*-----------------------------------------------------------------------
+
+*Selection Criteria for File Upload
+SELECTION-SCREEN: BEGIN OF BLOCK b1 WITH FRAME TITLE text-001.
+
+PARAMETERS: p_phpath  LIKE rlgrap-filename,    "Physical Path
+            p_lgpath  LIKE filename-fileintern."Logical Path
+
+PARAMETERS:
+   p_local    RADIOBUTTON GROUP rb1 DEFAULT 'X', "Local Path
+   p_unix     RADIOBUTTON GROUP rb1.            "Unix Path
+
+PARAMETERS:
+   p_bdccr(12) TYPE c  DEFAULT 'ZCustCreate',
+   p_bdcch(12) TYPE c  DEFAULT 'ZCustChange'.
+
+PARAMETERS:
+   p_create      RADIOBUTTON GROUP rb2 DEFAULT 'X', "Create Customer
+   p_change      RADIOBUTTON GROUP rb2.             "Change Customer
+
+PARAMETERS:
+   p_dupl RADIOBUTTON GROUP rb3 DEFAULT 'X' MODIF ID mo1,
+   p_upload RADIOBUTTON GROUP rb3 MODIF ID mo1.
+
+
+SELECTION-SCREEN: END OF BLOCK b1.
+
+*Special Character for Customer Modifications
+SELECTION-SCREEN BEGIN OF BLOCK b2 WITH FRAME TITLE text-002.
+PARAMETERS:
+  p_cchar TYPE c DEFAULT '~'.        "Special Character For Modification
+SELECTION-SCREEN END OF BLOCK b2.
+
+*File Delimiter
+SELECTION-SCREEN BEGIN OF BLOCK b3 WITH FRAME TITLE text-003.
+PARAMETERS: p_tab RADIOBUTTON GROUP rad1,
+            p_semi RADIOBUTTON GROUP rad1,
+            p_comma RADIOBUTTON GROUP rad1 DEFAULT 'X',
+            p_other RADIOBUTTON GROUP rad1,
+            p_delim(1) TYPE c.
+SELECTION-SCREEN END OF BLOCK b3.
+
+*-----------------------------------------------------------------------
+* Initialization
+*-----------------------------------------------------------------------
+INITIALIZATION.
+  PERFORM initialization.
+
+
+AT SELECTION-SCREEN ON BLOCK b1.
+  IF NOT p_local IS INITIAL AND  p_phpath IS INITIAL.
+    MESSAGE e000(z0) WITH text-024.
+  ELSEIF NOT p_unix IS INITIAL AND p_lgpath IS INITIAL.
+    MESSAGE e000(z0) WITH text-025.
+  ENDIF.
+
+
+AT SELECTION-SCREEN ON VALUE-REQUEST FOR p_phpath.
+  CALL FUNCTION 'WS_FILENAME_GET'
+       EXPORTING
+            mask             = ',*.*,*.*.'
+            mode             = 'ASC'
+            title            = 'Open Local File'
+       IMPORTING
+            filename         = p_phpath
+       EXCEPTIONS
+            inv_winsys       = 1
+            no_batch         = 2
+            selection_cancel = 3
+            selection_error  = 4
+            OTHERS           = 5.
+
+  IF sy-subrc NE 0.
+    CLEAR p_phpath.
+  ENDIF.
+
+*-----------------------------------------------------------------------
+* Selection
+*-----------------------------------------------------------------------
+* Start of Selection
+START-OF-SELECTION.
+  PERFORM upload_file.
+  PERFORM split_file.
+  PERFORM file_validations.
+
+* If test mode for duplicate radiobutton is flaged
+  IF NOT p_dupl IS INITIAL.
+    PERFORM duplicate_check.
+  ENDIF.
+
+  IF i_results_tab[] IS INITIAL.
+    IF NOT p_upload IS INITIAL.
+      PERFORM generate_bdc.
+      IF w_bdc_created = 'Y'.
+        CALL FUNCTION 'BDC_CLOSE_GROUP'.
+      ENDIF.
+    ENDIF.
+  ENDIF.
+
+*End of Selection
+END-OF-SELECTION.
+  IF NOT p_upload IS INITIAL.
+    PERFORM write_report.
+  ELSE.
+
+    IF i_final1[] IS INITIAL AND i_final[] IS INITIAL.
+      MESSAGE i000(z0) WITH text-004.
+      LEAVE LIST-PROCESSING.
+    ELSE.
+      PERFORM write_duplicate_check_result.
+    ENDIF.
+  ENDIF.
+
+*-----------------------------------------------------------------------
+* Processing routines - Forms
+*-----------------------------------------------------------------------
+  INCLUDE zv1311110_f01.            " Data selection & processing forms

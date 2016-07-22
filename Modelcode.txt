@@ -1,0 +1,234 @@
+*&---------------------------------------------------------------------*
+*& Report  Z21308_REPORT                                               *
+*&                                                                     *
+*&---------------------------------------------------------------------*
+*&                                                                     *
+*&                                                                     *
+*&---------------------------------------------------------------------*
+
+report  z21308_report                           .
+
+
+tables : bkpf, bseg.
+
+select-options: s_year for bkpf-gjahr obligatory,
+                s_compcd for bkpf-bukrs obligatory,
+                s_vendor for bseg-saknr,
+                s_cust for bseg-kunnr,
+                s_ref for bkpf-xblnr,
+                s_accno for bkpf-belnr obligatory.
+parameters      p_ddate type ekko-aedat.
+
+type-pools: slis.
+
+types  : begin of t_bkpf,
+         belnr like bkpf-belnr,
+         bukrs like bkpf-bukrs,
+         gjahr like bkpf-gjahr,
+         xblnr like bkpf-xblnr,
+         end of t_bkpf.
+
+types  : begin of t_bseg,
+         kunnr like bseg-kunnr,
+         bukrs like bseg-bukrs,
+         gjahr like bseg-gjahr,
+         saknr like bseg-saknr,
+         dmbtr like bseg-dmbtr,
+         mwsts like bseg-mwsts,
+         belnr like bseg-belnr,
+         end of t_bseg.
+
+types : begin of t_output,
+       belnr like bkpf-belnr,
+       bukrs like bkpf-bukrs,
+       gjahr like bkpf-gjahr,
+       xblnr like bkpf-xblnr,
+       saknr like bseg-saknr,
+       kunnr like bseg-kunnr,
+       dmbtr like bseg-dmbtr,
+       mwsts like bseg-mwsts,
+       end of t_output.
+
+data : begin of tab4 occurs 1,
+       belnr like bkpf-belnr,
+       bukrs like bkpf-bukrs,
+       gjahr like bkpf-gjahr,
+       xblnr like bkpf-xblnr,
+       saknr like bseg-saknr,
+       kunnr like bseg-kunnr,
+       dmbtr like bseg-dmbtr,
+       mwsts like bseg-mwsts,
+       end of tab4.
+
+types : table1 type table of t_bkpf.
+types : table2 type table of t_bseg.
+types : table3 type table of t_output.
+
+data : tab1 type table1 with header line.
+data : tab2 type table2 with header line.
+data : tab3 type table3 with header line.
+
+data: t_fieldcat type slis_t_fieldcat_alv with header line.
+
+data: t_events type slis_t_event with header line.
+
+data: t_top_of_page type slis_t_listheader with header line.
+
+data: wa_keyinfo type slis_keyinfo_alv.
+
+data: wa_variant like disvariant.
+
+at selection-screen.
+
+  if s_cust ne ' ' and s_vendor ne ' '.
+    message 'Select only customer or vendor' type 'I'.
+  endif.
+
+start-of-selection.
+
+  perform get_data.
+
+*  LOOP AT tab3.
+*   WRITE : / tab3-kunnr, tab3-saknr, tab3-dmbtr, tab3-mwsts, tab3-belnr
+*, tab3-bukrs, tab3-gjahr, tab3-xblnr.
+*  ENDLOOP.
+
+    perform create_fieldcatalog.
+
+    perform list_display.
+
+end-of-selection.
+
+
+*&--------------------------------------------------------------------*
+*&      Form  get_data
+*&--------------------------------------------------------------------*
+*       text
+*---------------------------------------------------------------------*
+form get_data .
+
+  select belnr bukrs gjahr xblnr
+  from bkpf
+  into table tab1
+  where gjahr in s_year
+  and bukrs in s_compcd
+  and belnr in s_accno.
+
+  if not tab1[] is initial.
+
+    select kunnr bukrs gjahr saknr dmbtr mwsts belnr
+    from bseg
+    into table tab2
+    for all entries in tab1
+     where gjahr = tab1-gjahr
+     and bukrs = tab1-bukrs
+     and belnr = tab1-belnr.
+
+  endif.
+
+  loop at tab1.
+
+    move: tab1-belnr to tab3-belnr,
+          tab1-bukrs to tab3-bukrs,
+          tab1-gjahr to tab3-gjahr,
+          tab1-xblnr to tab3-xblnr.
+
+*    CLEAR t_ekko.
+
+    read table tab2 with key belnr = tab1-belnr
+                             bukrs = tab1-bukrs
+                             gjahr = tab1-gjahr.
+
+    if sy-subrc = 0.
+
+      move 	: tab2-kunnr 	to 	tab3-kunnr,
+              tab2-saknr 	to 	tab3-saknr,
+              tab2-dmbtr 	to 	tab3-dmbtr,
+              tab2-mwsts 	to 	tab3-mwsts.
+    endif.
+
+    append tab3.
+    clear tab3.
+
+  endloop.
+
+endform.                    "get_data
+
+*&---------------------------------------------------------------------*
+*&      Form  create_fieldcatalog
+*&---------------------------------------------------------------------*
+
+form create_fieldcatalog .
+
+  call function 'REUSE_ALV_FIELDCATALOG_MERGE'
+exporting
+     i_program_name               = 'Z21308_REPORT'
+     i_internal_tabname           = 'TAB4'
+*   I_STRUCTURE_NAME             =
+*   I_CLIENT_NEVER_DISPLAY       = 'X'
+     i_inclname                   = 'Z21308_REPORT'
+*   I_BYPASSING_BUFFER           = 'X'
+*   I_BUFFER_ACTIVE              = ' '
+    changing
+      ct_fieldcat                  = t_fieldcat[]
+   exceptions
+     inconsistent_interface       = 1
+     program_error                = 2
+     others                       = 3
+            .
+  if sy-subrc <> 0.
+    message id sy-msgid type sy-msgty number sy-msgno
+            with sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+  endif.
+
+endform.                    " create_fieldcatalog
+
+*&--------------------------------------------------------------------*
+*&      Form  list_display
+*&--------------------------------------------------------------------*
+
+form list_display .
+
+  call function 'REUSE_ALV_LIST_DISPLAY'
+ exporting
+*   I_INTERFACE_CHECK              = ' '
+   i_bypassing_buffer             = 'X'
+   i_buffer_active                = ' '
+     i_callback_program             = 'Z21308_REPORT'
+*   I_CALLBACK_PF_STATUS_SET       = ' '
+*   I_CALLBACK_USER_COMMAND        = ' '
+*   I_STRUCTURE_NAME               =
+*   IS_LAYOUT                      =
+     it_fieldcat                    = t_fieldcat[]
+*   IT_EXCLUDING                   =
+*   IT_SPECIAL_GROUPS              =
+*   IT_SORT                        =
+*   IT_FILTER                      =
+*   IS_SEL_HIDE                    =
+    i_default                      = 'X'
+    i_save                         = 'A'
+*   IS_VARIANT                     =
+*   IT_EVENTS                      =
+*   IT_EVENT_EXIT                  =
+*   IS_PRINT                       =
+*   IS_REPREP_ID                   =
+*   I_SCREEN_START_COLUMN          = 0
+*   I_SCREEN_START_LINE            = 0
+*   I_SCREEN_END_COLUMN            = 0
+*   I_SCREEN_END_LINE              = 0
+* IMPORTING
+*   E_EXIT_CAUSED_BY_CALLER        =
+*   ES_EXIT_CAUSED_BY_USER         =
+    tables
+      t_outtab                       = tab3
+   exceptions
+     program_error                  = 1
+     others                         = 2
+            .
+  if sy-subrc <> 0.
+    message id sy-msgid type sy-msgty number sy-msgno
+            with sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+
+  endif.
+
+endform.

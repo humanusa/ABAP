@@ -1,0 +1,220 @@
+*&---------------------------------------------------------------------*
+*& Module pool       ZPURCR_75105_DP                                   *
+*&                                                                     *
+*&---------------------------------------------------------------------*
+*&                                                                     *
+*&                                                                     *
+*&---------------------------------------------------------------------*
+
+PROGRAM  zpurcr_75105_dp MESSAGE-ID zz.
+
+*-------------------------------------*
+*        Data Declarations            *
+*-------------------------------------*
+
+* Tables
+TABLES: zekko_75105.
+
+* Types
+TYPES: BEGIN OF ty_tab,
+        ebeln TYPE zekko_75105-ebeln,
+        bukrs TYPE zekko_75105-bukrs,
+        lifnr TYPE zekko_75105-lifnr,
+        bedat TYPE zekko_75105-bedat,
+        netpr TYPE zekko_75105-netpr,
+        waers TYPE zekko_75105-waers,
+        pick  TYPE c,
+      END OF ty_tab.
+
+* Internal Tables
+DATA: int_tab TYPE STANDARD TABLE OF ty_tab WITH HEADER LINE,
+      wa_tab TYPE ty_tab.
+
+* Table Control
+CONTROLS: tab_control TYPE TABLEVIEW USING SCREEN '1000'.
+
+* Variables
+DATA: v_flag,            " Flag to set the change mode
+      v_num  TYPE i.     " Number of records
+
+
+*----------------------------------------*
+*        Modules Definitions             *
+*----------------------------------------*
+*&---------------------------------------------------------------------*
+*&      Module  get_tab_control_lines  OUTPUT
+*&---------------------------------------------------------------------*
+*       Populating data
+*----------------------------------------------------------------------*
+MODULE get_tab_control_lines OUTPUT.
+
+SELECT *
+FROM zekko_75105
+INTO CORRESPONDING FIELDS OF TABLE int_tab.
+
+DESCRIBE TABLE int_tab LINES v_num.
+* To make the vertical scroll bar to come on runtime
+tab_control-lines = v_num + 100.
+
+ENDMODULE.                 " get_tab_control_lines  OUTPUT
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_1000  INPUT
+*&---------------------------------------------------------------------*
+*       Triggering event according to the user command
+*----------------------------------------------------------------------*
+MODULE user_command_1000 INPUT.
+
+DATA: lv_fcode  LIKE sy-ucomm,         "Function Code
+      lv_answer TYPE c.                "Storing the answer
+
+lv_fcode = sy-ucomm.
+
+CASE lv_fcode.
+
+  WHEN 'ADD'.
+* Inserting new record or updating existing record in database table
+* from the internal table
+    v_flag = 'Y'.
+    LOOP AT int_tab INTO wa_tab.
+      MOVE-CORRESPONDING wa_tab TO zekko_75105.
+      MODIFY zekko_75105. " FROM TABLE int_tab.
+    ENDLOOP.
+
+    if sy-subrc = 0.
+      MESSAGE s003 WITH 'Added Successfully'.
+    ENDIF.
+
+  WHEN 'DELETE'.
+* Setting the flag to make the table control in editable mode after
+* deleting the selected line
+    v_flag = 'Y'.
+* Confirmation of delete
+    CALL FUNCTION 'POPUP_TO_CONFIRM'
+      EXPORTING
+        titlebar = 'Confirm'
+        text_question = 'Are you sure to delete from database?'
+        text_button_1 = 'Yes'(001)
+        text_button_2 = 'No'(002)
+      IMPORTING
+        answer = lv_answer.
+
+    IF lv_answer EQ '1'.
+* Updating the database table from the internal table
+*      UPDATE zekko_75105 FROM TABLE int_tab.
+* Deleting the selected row from the internal table
+      DELETE int_tab WHERE pick = 'X'.
+* Deleting the selected row from the database table
+      LOOP AT int_tab INTO wa_tab.
+        DELETE FROM zekko_75105 WHERE ebeln = wa_tab-ebeln.
+      ENDLOOP.
+
+      if sy-subrc = 0.
+        MESSAGE s003 WITH 'Deleted Successfully'.
+      ENDIF.
+    ENDIF.
+
+  WHEN 'CREATE'.
+    v_flag = 'Y'.
+* Updating the database table from the internal table
+    LOOP AT int_tab INTO wa_tab.
+      MOVE-CORRESPONDING wa_tab TO zekko_75105.
+      UPDATE zekko_75105. " FROM TABLE int_tab.
+    ENDLOOP.
+
+    if sy-subrc = 0.
+      MESSAGE s003 WITH 'Created Successfully'.
+    ENDIF.
+
+  WHEN 'MODIFY'.
+* Setting the flag to make the table control in editable mode (excluding
+* primary key)
+    v_flag = 'Y'.
+
+    LOOP AT int_tab INTO wa_tab.
+      MOVE-CORRESPONDING wa_tab TO zekko_75105.
+      MODIFY zekko_75105. " FROM TABLE int_tab.
+    ENDLOOP.
+
+    if sy-subrc = 0.
+      MESSAGE s003 WITH 'Modified Successfully'.
+    ENDIF.
+
+  WHEN 'DISPLAY'.
+    MOVE int_tab-ebeln TO wa_tab-ebeln.
+    SELECT *
+      FROM zekko_75105
+      INTO CORRESPONDING FIELDS OF TABLE int_tab
+        WHERE ebeln = wa_tab-ebeln.
+
+    IF sy-subrc = 0.
+      CALL FUNCTION 'REUSE_ALV_GRID_DISPLAY'
+        TABLES
+          t_outtab    = int_tab     .
+    ENDIF.
+
+  WHEN 'EXIT'.
+* Leaving the program
+    LEAVE PROGRAM.
+
+ENDCASE.
+
+ENDMODULE.                 " USER_COMMAND_1000  INPUT
+*&---------------------------------------------------------------------*
+*&      Module  set_screen_fields  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE set_screen_fields OUTPUT.
+
+LOOP AT SCREEN.
+  IF v_flag IS INITIAL.
+    screen-input = 0.
+  ELSEIF ( v_flag EQ 'Y' ).
+* Making the screen fields as editable
+    screen-input = 1.
+  ENDIF.
+* Modifying the screen after making changes
+  MODIFY SCREEN.
+ENDLOOP.
+
+ENDMODULE.                 " set_screen_fields  OUTPUT
+*&---------------------------------------------------------------------*
+*&      Module  append_ebeln  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE append_ebeln INPUT.
+
+  MODIFY int_tab INDEX tab_control-current_line.
+  IF tab_control-current_line GT v_num.
+    READ TABLE int_tab WITH KEY ebeln = int_tab-ebeln.
+    IF sy-subrc NE 0.
+* Inserting record if it does not exist in database
+      APPEND int_tab.
+    ELSE.
+      MESSAGE i003 WITH 'Purchase Order' int_tab-ebeln 'already exists'.
+    ENDIF.
+  ENDIF.
+
+ENDMODULE.                 " append_ebeln  INPUT
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_1000  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE status_1000 OUTPUT.
+
+SET PF-STATUS '1000'.
+SET TITLEBAR '1000'.
+
+ENDMODULE.                 " STATUS_1000  OUTPUT
+*&---------------------------------------------------------------------*
+*&      Module  modify_table  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE modify_table INPUT.
+
+MODIFY int_tab INDEX tab_control-current_line.
+
+ENDMODULE.                 " modify_table  INPUT

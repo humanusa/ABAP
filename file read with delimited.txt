@@ -1,0 +1,81 @@
+*&---------------------------------------------------------------------*
+*& Report  ZUPLOADTAB                                                  *
+*&                                                                     *
+*&---------------------------------------------------------------------*
+*& Example of Uploading tab delimited file                             *
+*&                                                                     *
+*&---------------------------------------------------------------------*
+REPORT  zuploadtab                    .
+
+PARAMETERS: p_infile  LIKE rlgrap-filename
+                        OBLIGATORY DEFAULT  '/usr/sap/'..
+
+DATA: ld_file LIKE rlgrap-filename.
+
+*Internal tabe to store upload data
+TYPES: BEGIN OF t_record,
+    name1 like pa0002-VORNA,
+    name2 like pa0002-name2,
+    age   type i,
+    END OF t_record.
+DATA: it_record TYPE STANDARD TABLE OF t_record INITIAL SIZE 0,
+      wa_record TYPE t_record.
+
+*Text version of data table
+TYPES: begin of t_uploadtxt,
+  name1(10) type c,
+  name2(15) type c,
+  age(5)  type c,
+ end of t_uploadtxt.
+DATA: wa_uploadtxt TYPE t_uploadtxt.
+
+*String value to data in initially.
+DATA: wa_string(255) type c.
+
+constants: con_tab TYPE x VALUE '09'.
+
+*If you have Unicode check active in program attributes then you will
+*need to declare constants as follows:
+
+*class cl_abap_char_utilities definition load.
+*constants:
+*    con_tab  type c value cl_abap_char_utilities=>HORIZONTAL_TAB.
+
+
+
+************************************************************************
+*START-OF-SELECTION
+START-OF-SELECTION.
+ld_file = p_infile.
+OPEN DATASET ld_file FOR INPUT IN TEXT MODE ENCODING DEFAULT.
+IF sy-subrc NE 0.
+ELSE.
+  DO.
+    CLEAR: wa_string, wa_uploadtxt.
+    READ DATASET ld_file INTO wa_string.
+    IF sy-subrc NE 0.
+      EXIT.
+    ELSE.
+      SPLIT wa_string AT con_tab INTO wa_uploadtxt-name1
+                                      wa_uploadtxt-name2
+                                      wa_uploadtxt-age.
+      MOVE-CORRESPONDING wa_uploadtxt TO wa_upload.
+      APPEND wa_upload TO it_record.
+    ENDIF.
+  ENDDO.
+  CLOSE DATASET ld_file.
+ENDIF.
+
+
+************************************************************************
+*END-OF-SELECTION
+END-OF-SELECTION.
+*!! Text data is now contained within the internal table IT_RECORD
+
+* Display report data for illustration purposes
+  loop at it_record into wa_record.
+    write:/     sy-vline,
+           (10) wa_record-name1, sy-vline,
+           (10) wa_record-name2, sy-vline,
+           (10) wa_record-age, sy-vline.
+  endloop.

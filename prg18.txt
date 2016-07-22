@@ -1,0 +1,98 @@
+*&---------------------------------------------------------------------*
+*& Report  ZTESTEVENTS
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+REPORT  ztestevents.
+
+*NODES pernr.
+NODES : pernr, peras.
+*NODES OBJEC.
+
+INFOTYPES: 0016.
+
+*DATA : BEGIN OF wagetypes,
+*       lga LIKE p0008-lga01,
+*       bet LIKE p0008-bet01,
+*       anz LIKE p0008-anz01,
+*       ein LIKE p0008-ein01,
+*       opk LIKE p0008-opk01,
+*       ind LIKE p0008-ind01,
+*     END OF wagetypes.
+
+
+GET peras.
+
+*  rp_provide_from_last p0016 space pn-begda pn-endda.
+
+*PROVIDE * FROM P0016 BETWEEN pn-begda and pn-endda.
+*     WRITE :/ 'Person Num',p0016-pernr.
+*    EndProvide.
+
+    RP_PROVIDE_from_last P0016 space pn-begda pn-endda.
+      WRITE :/ 'Person Num',p0016-pernr.
+
+
+*  DO 40 TIMES VARYING wagetypes-lga
+*              FROM p0008-lga01
+*              NEXT p0008-lga02
+*    VARYING wagetypes-bet
+*            FROM p0008-bet01
+*            NEXT p0008-bet02
+*    VARYING wagetypes-anz
+*    FROM p0008-anz01
+*    NEXT p0008-anz02
+*    VARYING wagetypes-ein
+*    FROM p0008-ein01
+*    NEXT p0008-ein02
+*    VARYING wagetypes-opk
+*    FROM p0008-opk01
+*    NEXT p0008-opk02
+*    VARYING wagetypes-ind
+*    FROM p0008-ind01
+*    NEXT p0008-ind02.
+*
+*    IF p0016-subty IS INITIAL.
+*      WRITE :/ 'No subtype'.
+*      EXIT.
+*    ELSE.
+
+*               'lga',wagetypes-lga,
+*               'anz',wagetypes-anz,
+*               'bet',wagetypes-bet,
+*               'ein',wagetypes-ein,
+*               'opk',wagetypes-opk,
+*               'ind',wagetypes-ind
+*    endif.
+*   enddo.
+
+
+
+*break-point.
+
+*Write :/ 'Test Logical database',P0001-pernr,p0002-infty.
+
+*Provide * from P0002 between PN-BEGDA and PN-ENDDA.
+*
+*  Write :/ 'Test Logical database',P0001-pernr,p0002-infty.
+*
+*EndProvide.
+
+*Provide * from p0001
+*        * from p0002
+*        * from p0007
+*        * from P0006
+*        between pn-begda and pn-endda
+*   where P0006-SUBTY = '1'.
+*  if P0006_valid = 'X'.
+*  Write :/ 'Test Logical database',P0001-pernr,p0002-infty.
+*  EndIf.
+*  EndProvide.
+
+*
+*RP_PROVIDE_FROM_FRST p0001 space pn-begda pn-endda.
+*
+*  WRITE :/ 'Test Logical database',p0001-pernr,p0001-begda.

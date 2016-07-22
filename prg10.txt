@@ -1,0 +1,46 @@
+*&---------------------------------------------------------------------*
+*& Report  ZTESTAUG08
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+REPORT  ztestaug08.
+
+DATA:l_data TYPE i,
+l_data1 TYPE i.
+
+DATA :l_char TYPE c.
+CONSTANTS:c_const TYPE i VALUE 100.
+DATA: m(2) TYPE n VALUE '11'.
+
+
+INITIALIZATION.
+  CLEAR l_data1.
+
+START-OF-SELECTION.
+  l_data = 10.
+  l_data1 = 11.
+
+  CASE m.
+
+    WHEN '11'.
+
+      WRITE 'm11'.
+
+    WHEN OTHERS.
+
+      "WRITE 'default'.
+
+  ENDCASE.
+
+  CHECK l_data > l_data1.
+
+  WRITE 'prem'.
+  " emp_no = 2.
+
+
+
+END-OF-SELECTION.
+  WRITE 'out of event'.

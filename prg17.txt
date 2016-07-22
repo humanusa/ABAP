@@ -1,0 +1,118 @@
+*&---------------------------------------------------------------------*
+*& Report  ZTESTDATA
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+REPORT  ZTESTDATA.
+
+******** sample program for elementary data object **********
+
+*data: a type string value 'welcome version'.
+*data: b type i value 6.
+*data: c type string value 'to abap'.
+*
+*write: a, b, c.
+
+***********************************************************
+
+******sample program for elementary type element***********
+
+*Types name(15)    type c.
+*Types age(4)      type i.
+*Types company(20) type c.
+*
+*Data out_name    type name.
+*Data out_age     type age.
+*Data out_company type company.
+*
+*out_Name = 'prasadchellaiyaraj'.
+*out_Age = 123456.
+*out_company = 'infosys'.
+*
+*Write: /'name is'   , out_name.
+*Write: /'age is'    , out_age.
+*Write: /'comapny is', out_company.
+*
+***********************************************************
+************sample structure pgm ************
+
+
+*TYPES: BEGIN OF name,
+*         title(5)       TYPE c,
+*         first_name(10) TYPE c,
+*         last_name(10)  TYPE c,
+*       END OF name.
+*
+*TYPES: BEGIN OF mylist,
+*         client         TYPE name,
+*         number         TYPE i,
+*       END OF mylist.
+*
+*DATA list TYPE mylist.
+*
+*list-client-title = 'infosys'.
+*list-client-first_name = 'prasad'.
+*list-client-last_name = 'rajendran'.
+*list-number = 1.
+*
+*WRITE list-client-title.
+*WRITE list-client-first_name.
+*WRITE list-client-last_name.
+*WRITE / 'Number'.
+*WRITE list-number.
+*
+**********************************************************
+********sample pgm for move corresponding**********
+
+*data: begin of contactinfo,
+*            firstname(10) type c value 'prasad',
+*            lastname(10)  type c value 'rajendran',
+*            age(2)        type i value 29,
+*      end of contactinfo.
+*
+*data: begin of perinfo,
+*           name1(10) type c,
+*           name2(10) type c,
+*           age1(2)   type i,
+*      end of perinfo.
+**data perinfo type contactinfo.
+*clear perinfo.
+*      move-corresponding contactinfo to perinfo.
+*
+*      write: / 'sample for move corresponding'.
+*      skip.
+*
+*      uline.
+*      write: / 'first name is', contactinfo-firstname.
+*      write: / 'last name is',  contactinfo-lastname.
+*      write: / 'age is',        contactinfo-age.
+*Skip.
+*uline.
+*
+*      write: / 'first name is', perinfo-name1.
+*      write: / 'last name is',  perinfo-name2.
+*      write: / 'age is',        perinfo-age1.
+*
+*
+*      write: /  SY-UZEIT.
+*      write: / SY-DATUM.
+********************************************
+
+
+
+      Data: Begin of itab occurs 10,
+                            col1 type C,
+           	              col2 type I,
+			end of itab.
+		    Do 3 times.
+		       Append initial line to itab.
+		       itab-col1 = sy-index.
+		       itab-col2 = sy-index ** 2.
+		       Append itab.
+		    Enddo.
+		    Loop at itab.
+		        write :/ itab-col1, itab-col2.
+		    endloop.

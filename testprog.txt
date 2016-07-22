@@ -1,0 +1,32 @@
+*&---------------------------------------------------------------------*
+*& Report  ZTEST8
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+REPORT  ZTEST8.
+
+DATA l_data type i.
+data L_char type c.
+
+data emp_number type i.
+constants c_const type i value 100.
+
+*data emp_surname type c. 
+
+data: emp_number2 type i value 100,
+emp_name(30) type c value 'test',
+emp_salary type p decimals 2,
+emp_no(2) type n.
+
+initialization. 
+clear l_data. 
+
+start-of-selection. 
+
+l_data = 'test prog'. 
+emp_no = 02.
+
+end-of-selection. 

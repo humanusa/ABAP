@@ -1,0 +1,42 @@
+REPORT  ZTESTALV.
+
+tables : kna1.
+DATA : w_container type ref to cl_gui_custom_container,
+       w_grid      type ref to cl_gui_alv_grid.
+
+DATA : t_kna1 type standard table of kna1 with header line.
+
+Select-options : s_kunnr for kna1-kunnr.
+
+
+select * into table t_kna1 from kna1
+where kunnr in s_kunnr.
+
+Call screen 100.
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_0100  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE STATUS_0100 OUTPUT.
+*  SET PF-STATUS 'xxxxxxxx'.
+*  SET TITLEBAR 'xxx'.
+
+  CREATE OBJECT w_container
+    	EXPORTING
+    	CONTAINER_NAME = 'CONTAINER'.
+
+
+  CREATE OBJECT w_grid
+    	EXPORTING
+    		I_PARENT = w_container.
+
+  CALL METHOD w_grid->set_table_for_first_display
+    	  EXPORTING
+      	     i_structure_name = 'KNA1'
+  	  CHANGING
+     	    it_outtab = t_kna1[].
+
+
+
+ENDMODULE.                 " STATUS_0100  OUTPUT

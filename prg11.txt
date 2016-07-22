@@ -1,0 +1,47 @@
+*&---------------------------------------------------------------------*
+*& Report  ZTESTAUG08_SELSCREEN
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+REPORT  ztestaug08_selscreen.
+
+TABLES: ekko,ekpo.
+
+"SELECTION-SCREEN BEGIN OF BLOCK b1 WITH FRAME TITLE text-t01.
+
+	SELECT-OPTIONS: s_dummy FOR ekpo-aedat,
+      	                     s_bsart FOR ekko-bsart NO-EXTENSION NO INTERVALS,
+                                  s_lifnr FOR ekko-lifnr.
+	PARAMETERS         p_ddate TYPE ekko-aedat .
+
+
+
+SELECTION-SCREEN BEGIN OF BLOCK b2 WITH FRAME TITLE text-002.
+SELECT-OPTIONS: docno FOR ekpo-ebeln,
+itemno FOR ekpo-ebelp.
+
+
+
+
+SELECTION-SCREEN END OF BLOCK b2.
+
+
+"SELECTION-SCREEN END OF BLOCK b1.
+
+
+
+
+START-OF-SELECTION.
+
+  WRITE: 'Value of date is', p_ddate.
+  WRITE: 'text element value is ', text-t01.
+  WRITE: 'Current time is', sy-uzeit.
+  WRITE: ' Current date is ', sy-datum.
+  WRITE: 'doc no is ',docno-high.
+* tables:ekko,ekpo.
+*"selection-screen begin of block prem with title text-11
+
+* end-of-selection.

@@ -1,0 +1,84 @@
+*&---------------------------------------------------------------------*
+*& Module Pool       ZTEST_ABAP8_DIALOG
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+PROGRAM  ZTEST_ABAP8_DIALOG.
+
+*&SPWIZARD: FUNCTION CODES FOR TABSTRIP 'TAB2'
+CONSTANTS: BEGIN OF C_TAB2,
+             TAB1 LIKE SY-UCOMM VALUE 'TAB2_FC1',
+             TAB2 LIKE SY-UCOMM VALUE 'TAB2_FC2',
+           END OF C_TAB2.
+*&SPWIZARD: DATA FOR TABSTRIP 'TAB2'
+CONTROLS:  TABst2 TYPE TABSTRIP.
+DATA:      BEGIN OF G_TAB2,
+*             SUBSCREEN   LIKE SY-DYNNR,
+              dynnr LIKE SY-DYNNR,
+             PROG        LIKE SY-REPID VALUE 'ZTEST_ABAP8_DIALOG',
+             PRESSED_TAB LIKE SY-UCOMM VALUE C_TAB2-TAB1,
+           END OF G_TAB2.
+DATA:      OK_CODE LIKE SY-UCOMM.
+
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_2000  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE USER_COMMAND_2000 INPUT.
+
+ENDMODULE.                 " USER_COMMAND_2000  INPUT
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_2000  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE STATUS_2000 OUTPUT.
+*  SET PF-STATUS 'xxxxxxxx'.
+*  SET TITLEBAR 'xxx'.
+
+ENDMODULE.                 " STATUS_2000  OUTPUT
+
+*&SPWIZARD: FUNCTION CODES FOR TABSTRIP 'TABST'
+CONSTANTS: BEGIN OF C_TABST,
+             TAB1 LIKE SY-UCOMM VALUE 'TABST_FC1',
+             TAB2 LIKE SY-UCOMM VALUE 'TABST_FC2',
+           END OF C_TABST.
+*&SPWIZARD: DATA FOR TABSTRIP 'TABST'
+CONTROLS:  TABST TYPE TABSTRIP.
+DATA:      BEGIN OF G_TABST,
+             SUBSCREEN   LIKE SY-DYNNR,
+             PROG        LIKE SY-REPID VALUE 'ZTEST_ABAP8_DIALOG2',
+             PRESSED_TAB LIKE SY-UCOMM VALUE C_TABST-TAB1,
+           END OF G_TABST.
+
+*&SPWIZARD: OUTPUT MODULE FOR TS 'TABST'. DO NOT CHANGE THIS LINE!
+*&SPWIZARD: SETS ACTIVE TAB
+MODULE TABST_ACTIVE_TAB_SET OUTPUT.
+  TABST-ACTIVETAB = G_TABST-PRESSED_TAB.
+  CASE G_TABST-PRESSED_TAB.
+    WHEN C_TABST-TAB1.
+      G_TABST-SUBSCREEN = '1003'.
+    WHEN C_TABST-TAB2.
+      G_TABST-SUBSCREEN = '1004'.
+    WHEN OTHERS.
+*&SPWIZARD:      DO NOTHING
+  ENDCASE.
+ENDMODULE.
+
+*&SPWIZARD: INPUT MODULE FOR TS 'TABST'. DO NOT CHANGE THIS LINE!
+*&SPWIZARD: GETS ACTIVE TAB
+MODULE TABST_ACTIVE_TAB_GET INPUT.
+  OK_CODE = SY-UCOMM.
+  CASE OK_CODE.
+    WHEN C_TABST-TAB1.
+      G_TABST-PRESSED_TAB = C_TABST-TAB1.
+    WHEN C_TABST-TAB2.
+      G_TABST-PRESSED_TAB = C_TABST-TAB2.
+    WHEN OTHERS.
+*&SPWIZARD:      DO NOTHING
+  ENDCASE.
+ENDMODULE.
