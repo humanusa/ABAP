@@ -1,0 +1,483 @@
+
+REPORT ZTOOL_TABLE_VIEW.
+*&---------------------------------------------------------------------*
+*& Report ZDEP_TABLE_VIEW
+*&--------------------------------------------------------------------&*
+*& ABAP Name     : ZDEP_TABLE_VIEW                                     &*
+*& Created By    : Deepak Hada                                        &*
+*& Created On    : 20150821                                         &*
+*& Version       : 1.0                                                &*
+*& Description   :                                                    &*
+*& To do : Add limit fields for each table and set it to 1000 default &*
+*&--------------------------------------------------------------------&*
+*&                  Modification Log                                  &*
+*&--------------------------------------------------------------------&*
+*& Date        Programmer        Correction  Description              &*
+*& ----------  ----------------  ----------  ------------------------ &*
+*INCLUDE ZTOOL_TABLE_VIEW_SEL.
+*INCLUDE ZTOOL_TABLE_VIEW_TOP.
+*INCLUDE ZTOOL_TABLE_VIEW_FORMS.
+*&---------------------------------------------------------------------*
+*&                Initialization                                       *
+*&---------------------------------------------------------------------*
+
+SELECTION-SCREEN FUNCTION KEY 1.
+SELECTION-SCREEN FUNCTION KEY 2.
+SELECTION-SCREEN FUNCTION KEY 3.
+PARAMETERS:
+           tab1(30) DEFAULT 'EDP13', where1 type string default ' RCVPRN eq ''D11CLNT100''', p_join1 AS CHECKBOX USER-COMMAND check1,
+           tab2(30) DEFAULT 'EKKO', where2 type string default ' ebeln eq ''1''', p_join2 AS CHECKBOX USER-COMMAND check2,
+           tab3(30) DEFAULT 'EKPO', where3 type string default ' ebeln eq ''1''', p_join3 AS CHECKBOX USER-COMMAND check3,
+           tab4(30) DEFAULT 'VBAK', where4 type string default ' vbeln eq ''1''', p_join4 AS CHECKBOX USER-COMMAND check4,
+           tab5(30) DEFAULT 'VBAP', where5 type string default ' vbeln eq ''1''', p_join5 AS CHECKBOX USER-COMMAND check5,
+           tab6(30) DEFAULT 'VBAP', where6 type string default ' vbeln eq ''1''', p_join6 AS CHECKBOX USER-COMMAND check6.
+
+
+***********************************************************************************************************************************
+ TABLES SSCRFIELDS.
+data:
+myalv TYPE REF TO cl_salv_table,
+         ls_fieldcat  TYPE                   slis_t_fieldcat_alv,
+         gt_print TYPE slis_print_alv,
+         gt_events TYPE slis_t_event,
+         v_output type char1 value 'G',
+         ls_layout    TYPE                   slis_layout_alv,
+         ls_variant   TYPE                   disvariant,
+         lv_report    TYPE                   progname,
+     oref TYPE REF TO cl_demo_output_stream,
+     output_stream TYPE xstring.
+ FIELD-SYMBOLS: <dyn_tab1>  TYPE STANDARD TABLE,
+                <dyn_tab2>  TYPE STANDARD TABLE,
+                <dyn_tab3>  TYPE STANDARD TABLE,
+                <dyn_tab4>  TYPE STANDARD TABLE,
+                <dyn_tab5>  TYPE STANDARD TABLE,
+                <dyn_tab6>  TYPE STANDARD TABLE.
+*,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+
+
+INITIALIZATION.
+  SSCRFIELDS-FUNCTXT_01 = 'Copy where to All'.
+  SSCRFIELDS-FUNCTXT_02 = 'Delete All'.
+  SSCRFIELDS-FUNCTXT_03 = 'Browser output'.
+********************************************************************************************************************************
+
+********************************************************************************************************************************
+*----------------------------------------------------------------------*
+*                 AT SELECTION SCREEN                                  *
+*----------------------------------------------------------------------*
+AT SELECTION-SCREEN on VALUE-REQUEST FOR tab1.
+* to make this for all the tab1 fields
+perform f_getfields2 using tab1 CHANGING tab1.
+AT SELECTION-SCREEN on VALUE-REQUEST FOR where1.
+perform f_getfields using tab1 CHANGING where1.
+AT SELECTION-SCREEN on VALUE-REQUEST FOR where2.
+perform f_getfields using tab2 CHANGING where2.
+AT SELECTION-SCREEN on VALUE-REQUEST FOR where3.
+perform f_getfields using tab3 CHANGING where3.
+AT SELECTION-SCREEN on VALUE-REQUEST FOR where4.
+perform f_getfields using tab4 CHANGING where4.
+AT SELECTION-SCREEN on VALUE-REQUEST FOR where5.
+perform f_getfields using tab5 CHANGING where5.
+AT SELECTION-SCREEN on VALUE-REQUEST FOR where6.
+perform f_getfields using tab6 CHANGING where6.
+AT SELECTION-SCREEN.
+if ( tab1 is not initial and where1 is INITIAL ) or ( tab2 is not initial and where2 is INITIAL ) or ( tab3 is not initial and where3 is INITIAL ) or
+   ( tab4 is not initial and where4 is INITIAL ) or ( tab5 is not initial and where5 is INITIAL ) or ( tab6 is not initial and where6 is INITIAL )  .
+    message 'Where field cannot be blank' type 'E'.
+endif.
+  IF SSCRFIELDS-UCOMM = 'FC01'.
+    perform f_copywhere_all.
+  ELSEif SSCRFIELDS-UCOMM = 'FC02'.
+    perform f_delete_all.
+  ELSEif SSCRFIELDS-UCOMM = 'FC03'.
+    v_output = 'B'.
+*  ELSEif SSCRFIELDS-UCOMM = 'CHECK1' and p_join1 eq 'X'.
+*   where1 =  '  EQ  <DYN_TAB2>- '.
+ELSEIF  SSCRFIELDS-UCOMM = 'CHECK2' and p_join2 eq 'X'.
+   where2 =  '  EQ  <DYN_TAB1>- '.
+ELSEIF  SSCRFIELDS-UCOMM = 'CHECK3' and p_join3 eq 'X'.
+   where3 =  '  EQ  <DYN_TAB2>- '.
+ELSEIF  SSCRFIELDS-UCOMM = 'CHECK4' and p_join4 eq 'X'.
+   where4 =  '  EQ  <DYN_TAB3>- '.
+ELSEIF  SSCRFIELDS-UCOMM = 'CHECK5' and p_join5 eq 'X'.
+   where5 =  '  EQ  <DYN_TAB4>- '.
+ELSEIF  SSCRFIELDS-UCOMM = 'CHECK6' and p_join6 eq 'X'.
+   where6 =  '  EQ  <DYN_TAB5>- '.
+ENDIF.
+AT SELECTION-SCREEN OUTPUT.
+*&---------------------------------------------------------------------*
+*&             START-OF-SELECTION.                                     *
+*&---------------------------------------------------------------------*
+START-OF-SELECTION.
+perform f_createitab1 using tab1 'tab1'.
+perform f_seltab1 using tab1 <dyn_tab1> where1.
+perform f_initalv.
+perform f_addtoalv1 using tab1 <dyn_tab1> '<dyn_tab1>'.
+perform f_write_stream using tab1 <dyn_tab1>.
+if tab2 is not INITIAL.
+perform f_createitab1 using tab2 'tab2'.
+if p_join2 ne 'X'.
+perform f_seltab1 using tab2 <dyn_tab2> where2.
+else.
+perform f_seltab2 using tab2 <dyn_tab2> where2.
+endif.
+perform f_addtoalv1 using tab2 <dyn_tab2> '<dyn_tab2>'.
+perform f_write_stream using tab2  <dyn_tab2>.
+endif.
+if tab3 is not INITIAL.
+perform f_createitab1 using tab3  'tab3'.
+if p_join3 ne 'X'.
+perform f_seltab1 using tab3 <dyn_tab3> where3.
+else.
+perform f_seltab2 using tab2 <dyn_tab2> where2.
+endif.
+perform f_addtoalv1 using tab3 <dyn_tab3> '<dyn_tab3>'.
+perform f_write_stream using tab3  <dyn_tab3>.
+endif.
+if tab4 is not INITIAL.
+perform f_createitab1 using tab4  'tab4'.
+if p_join4 ne 'X'.
+perform f_seltab1 using tab4 <dyn_tab4> where4.
+else.
+perform f_seltab2 using tab2 <dyn_tab2> where2.
+endif.
+perform f_addtoalv1 using tab4 <dyn_tab4> '<dyn_tab4>'.
+perform f_write_stream using tab4  <dyn_tab4>.
+endif.
+if tab5 is not INITIAL.
+perform f_createitab1 using tab5  'tab5'.
+if p_join5 ne 'X'.
+perform f_seltab1 using tab5 <dyn_tab5> where5.
+else.
+perform f_seltab2 using tab2 <dyn_tab2> where2.
+endif.
+perform f_addtoalv1 using tab5 <dyn_tab5> '<dyn_tab5>'.
+perform f_write_stream using tab5  <dyn_tab5>.
+endif.
+if tab6 is not INITIAL.
+perform f_createitab1 using tab6  'tab6'.
+if p_join6 ne 'X'.
+perform f_seltab1 using tab6 <dyn_tab6> where6.
+else.
+perform f_seltab2 using tab2 <dyn_tab2> where2.
+endif.
+perform f_write_stream using tab6  <dyn_tab6>.
+endif.
+perform f_disp_alv.
+END-OF-SELECTION.
+*&------End of Report --------------------*
+*&---------------------------------------------------------------------*
+*&  Include           ZDEP_TABLE_VIEW_SEL
+*&---------------------------------------------------------------------*
+*PARAMETERS: PFSTATUS TYPE SLIS_FORMNAME DEFAULT 'PF_STATUS_SET'.
+*SELECTION-SCREEN FUNCTION KEY 1.
+*SELECTION-SCREEN FUNCTION KEY 2.
+*SELECTION-SCREEN FUNCTION KEY 3.
+*PARAMETERS:
+*           tab1(30) DEFAULT 'EDP13', where1 type string default ' RCVPRN eq ''D11CLNT100''', p_join1 AS CHECKBOX USER-COMMAND check1,
+*           tab2(30) DEFAULT 'EKKO', where2 type string default ' ebeln eq ''1''', p_join2 AS CHECKBOX USER-COMMAND check2,
+*           tab3(30) DEFAULT 'EKPO', where3 type string default ' ebeln eq ''1''', p_join3 AS CHECKBOX USER-COMMAND check3,
+*           tab4(30) DEFAULT 'VBAK', where4 type string default ' vbeln eq ''1''', p_join4 AS CHECKBOX USER-COMMAND check4,
+*           tab5(30) DEFAULT 'VBAP', where5 type string default ' vbeln eq ''1''', p_join5 AS CHECKBOX USER-COMMAND check5,
+*           tab6(30) DEFAULT 'VBAP', where6 type string default ' vbeln eq ''1''', p_join6 AS CHECKBOX USER-COMMAND check6.
+*&---------------------------------------------------------------------*
+*&  Include           ZDEP_TABLE_VIEW_TOP
+*&---------------------------------------------------------------------*
+*TABLES SSCRFIELDS.
+*data:
+*myalv TYPE REF TO cl_salv_table,
+*         ls_fieldcat  TYPE                   slis_t_fieldcat_alv,
+*         gt_print TYPE slis_print_alv,
+*         gt_events TYPE slis_t_event,
+*         v_output type char1 value 'G',
+*         ls_layout    TYPE                   slis_layout_alv,
+*         ls_variant   TYPE                   disvariant,
+*         lv_report    TYPE                   progname,
+*     oref TYPE REF TO cl_demo_output_stream,
+*     output_stream TYPE xstring.
+* FIELD-SYMBOLS: <dyn_tab1>  TYPE STANDARD TABLE,
+*                <dyn_tab2>  TYPE STANDARD TABLE,
+*                <dyn_tab3>  TYPE STANDARD TABLE,
+*                <dyn_tab4>  TYPE STANDARD TABLE,
+*                <dyn_tab5>  TYPE STANDARD TABLE,
+*                <dyn_tab6>  TYPE STANDARD TABLE.
+*&---------------------------------------------------------------------*
+*&  Include           ZDEP_TABLE_VIEW_FORMS
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*&      Form  F_CREATEITAB1
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM f_createitab1 using p_tab p_name .
+data:          lo_new_type    TYPE REF TO cl_abap_structdescr,
+          lo_table_type  TYPE REF TO cl_abap_tabledescr,
+          w_tref         TYPE REF TO data,
+          lr_tabular_new type REF TO data.
+
+***************************************************************************************************************
+*create table not by describe_by_name but by taking individual elements.
+* Dynamic Table creation
+DATA: lo_struct   TYPE REF TO cl_abap_structdescr,
+      lo_element  TYPE REF TO cl_abap_elemdescr,
+      lo_new_type1 TYPE REF TO cl_abap_structdescr,
+      lo_new_tab  TYPE REF TO cl_abap_tabledescr,
+      lo_data     TYPE REF TO data,
+      lt_comp     TYPE cl_abap_structdescr=>component_table,
+      lt_tot_comp TYPE cl_abap_structdescr=>component_table,
+      la_comp     LIKE LINE OF lt_comp.
+*      lf_months   TYPE monat,
+*      lf_run_mon  TYPE monat.
+
+** Dynamic Selection fields
+*TYPES: BEGIN OF ty_fields,
+*       field TYPE char30,
+*       END   OF ty_fields.
+
+
+* DATA:  lt_fields TYPE STANDARD TABLE OF ty_fields,
+*       la_fields TYPE ty_fields.
+
+
+* FIELD-SYMBOLS: <f_tab>   TYPE ANY TABLE,
+*               <f_line>  TYPE ANY,
+*               <f_field> TYPE ANY.
+
+      lo_struct ?= cl_abap_typedescr=>describe_by_name( p_tab ).
+
+      lt_comp  = lo_struct->get_components( ).
+      APPEND LINES OF lt_comp TO lt_tot_comp.
+
+      lo_new_type = cl_abap_structdescr=>create( lt_tot_comp ).
+      lo_new_tab = cl_abap_tabledescr=>create(
+                  p_line_type  = lo_new_type
+                  p_table_kind = cl_abap_tabledescr=>tablekind_std
+                  p_unique     = abap_false ).
+
+      CREATE DATA w_tref TYPE HANDLE lo_new_tab.
+*****************************************************************************************************************
+** create table type from the dbtab table
+*  lo_new_type ?= cl_abap_typedescr=>describe_by_name( p_tab ).
+** Create new table type
+*  lo_table_type = cl_abap_tabledescr=>create( lo_new_type ).
+** Create dynamic internal table and assign to Field Symbol
+*  CREATE DATA w_tref TYPE HANDLE lo_table_type.
+  case p_name.
+    when 'tab1'.
+  ASSIGN w_tref->* TO <dyn_tab1>.
+    when 'tab2'.
+  ASSIGN w_tref->* TO <dyn_tab2>.
+    when 'tab3'.
+  ASSIGN w_tref->* TO <dyn_tab3>.
+    when 'tab4'.
+  ASSIGN w_tref->* TO <dyn_tab4>.
+    when 'tab5'.
+  ASSIGN w_tref->* TO <dyn_tab5>.
+    when 'tab6'.
+  ASSIGN w_tref->* TO <dyn_tab6>.
+ENDCASE.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  F_SELTAB1
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM f_seltab1 using p_tab p_itab type ANY TABLE p_where .
+  SELECT * FROM (p_tab) UP TO 100 rows
+    INTO TABLE p_itab
+  WHERE (p_where)   .
+ENDFORM.
+FORM f_seltab2 using p_tab p_itab type ANY TABLE p_where .
+    SELECT * FROM (p_tab) UP TO 100 rows
+    INTO TABLE p_itab
+FOR ALL ENTRIES IN <dyn_tab1>
+  WHERE (p_where).
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  F_ADDTOALV1
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM f_addtoalv1 using p_tab p_itab type table
+                       p_itabnm.
+data : i_text type SLIS_TEXT40.
+clear ls_fieldcat.
+i_text = p_tab.
+  CALL FUNCTION 'REUSE_ALV_FIELDCATALOG_MERGE'
+    EXPORTING
+      i_program_name   = sy-repid
+      i_structure_name = p_tab
+    CHANGING
+      ct_fieldcat      = ls_fieldcat.
+  lv_report = sy-repid.
+  CALL FUNCTION 'REUSE_ALV_BLOCK_LIST_APPEND'
+    EXPORTING
+      it_fieldcat = ls_fieldcat
+      is_layout   = ls_layout
+      i_tabname   =  p_itabnm
+      it_events   = gt_events
+      I_TEXT      = i_text
+    TABLES
+      t_outtab    = p_itab.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  F_DISP_ALV
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM f_disp_alv .
+  gt_print-reserve_lines = 2.
+if v_output eq 'G'.
+  CALL FUNCTION 'REUSE_ALV_BLOCK_LIST_DISPLAY'
+    EXPORTING
+      is_print = gt_print.
+* works to give multiple tables in a window
+* to do - make the window big with minimize button and back button etc. by changing handle method below
+elseif v_output eq 'B'.
+    output_stream = oref->close( ).
+endif.
+ENDFORM.
+form f_write_stream using p_tab p_table type table.
+if p_tab is not INITIAL.
+oref->write_data( p_tab ).
+oref->write_data( p_table ).
+ENDIF.
+ENDFORM.
+Form f_handle using p_output.
+    DATA lv_html TYPE string.
+    DATA gui_flag TYPE abap_bool.
+    DATA errors TYPE TABLE OF string ##needed.
+    CALL FUNCTION 'GUI_IS_AVAILABLE'
+      IMPORTING
+        return = gui_flag.
+    IF gui_flag IS NOT INITIAL.
+      cl_abap_browser=>show_html( EXPORTING html_string = lv_html
+                                            title = `Output`
+                                            check_html = abap_false
+                                  IMPORTING html_errors = errors   ) ##no_text.
+    ELSE.
+      EXPORT result_html = lv_html TO MEMORY ID 'RESULT_HTML'.
+    ENDIF.
+  endform.
+*&---------------------------------------------------------------------*
+*&      Form  F_INITALV
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM f_initalv .
+  CALL FUNCTION 'REUSE_ALV_BLOCK_LIST_INIT'
+    EXPORTING
+      i_callback_program      = sy-repid
+      i_callback_user_command = 'USER_COMMAND'.
+      oref = cl_demo_output_stream=>open( ).
+      SET HANDLER cl_demo_output_html=>handle_output FOR ALL INSTANCES.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  F_GETFIELDS
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+form f_getfields using p_table CHANGING p_field type string .
+        data: it_dd03l type STANDARD TABLE OF dd03l,
+               T_RETURN TYPE STANDARD TABLE OF DDSHRETVAL,
+               wa_ret type DDSHRETVAL,
+               lv_flag type char1.
+  select fieldname rollname from dd03l into CORRESPONDING FIELDS OF TABLE it_dd03l where tabname like p_table
+    and rollname ne '' ORDER BY position.
+CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+  EXPORTING
+    RETFIELD               = 'FIELDNAME'
+    VALUE_ORG              = 'S'
+    MULTIPLE_CHOICE        = 'X'
+  TABLES
+    VALUE_TAB              = it_dd03l
+    return_tab             = t_return.
+loop at t_return into wa_ret.
+     if lv_flag is not INITIAL.
+     CONCATENATE p_field ' AND ' into p_field SEPARATED BY ' '.
+     endif.
+     CONCATENATE p_field wa_ret-fieldval ' eq  '' ''' into p_field SEPARATED BY ' '.
+     lv_flag = 'X'.
+ENDLOOP.
+ENDFORM.
+form f_getfields2 using p_table CHANGING p_field.
+        data: it_tadir type STANDARD TABLE OF tadir,
+               T_RETURN TYPE STANDARD TABLE OF DDSHRETVAL,
+               wa_ret type DDSHRETVAL,
+               lv_flag type char1,
+               g_t_dynp TYPE TABLE OF dynpread,
+      g_r_dynp TYPE dynpread.
+ REFRESH g_t_dynp.
+  g_r_dynp-fieldname = 'TAB1'.
+  APPEND g_r_dynp TO g_t_dynp.
+  CALL FUNCTION 'DYNP_VALUES_READ'
+    EXPORTING
+      dyname     = sy-repid
+      dynumb     = sy-dynnr
+    TABLES
+      dynpfields = g_t_dynp.
+  READ TABLE g_t_dynp INTO g_r_dynp WITH KEY fieldname = 'TAB1'.
+CONCATENATE g_r_dynp-fieldvalue '%' into g_r_dynp-fieldvalue.
+  select obj_name from tadir into CORRESPONDING FIELDS OF TABLE it_tadir where obj_name like g_r_dynp-fieldvalue
+    and object eq 'TABL'.
+CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+  EXPORTING
+    RETFIELD               = 'OBJ_NAME'
+    VALUE_ORG              = 'S'
+    MULTIPLE_CHOICE        = 'X'
+  TABLES
+    VALUE_TAB              = it_tadir
+    return_tab             = t_return.
+loop at t_return into wa_ret.
+     if lv_flag is not INITIAL.
+     CONCATENATE p_field ' AND ' into p_field SEPARATED BY ' '.
+     endif.
+     p_field = wa_ret-fieldval.
+     lv_flag = 'X'.
+ENDLOOP.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  F_COPYWHERE_ALL
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+form f_copywhere_all .
+where2 = where1.
+where3 = where1.
+where4 = where1.
+where5 = where1.
+where6 = where1.
+endform.
+*&---------------------------------------------------------------------*
+*&      Form  F_DELETE_ALL
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+form f_delete_all .
+clear: tab1, tab2, tab3, tab4, tab5,tab6, where1, where2, where3,
+       where4, where5, where6.
+endform.
